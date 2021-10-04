@@ -9,10 +9,10 @@ class SMObject
 {
 	HANDLE CreateHandle;
 	HANDLE AccessHandle;
-	TCHAR *szName;
+	TCHAR* szName;
 	int Size;
 public:
-	void *pData;
+	void* pData;
 	int SMCreateError;
 	int SMAccessError;
 public:
@@ -25,5 +25,3 @@ public:
 	void SMObject::SetSize(int size);
 };
 #endif
-
-
