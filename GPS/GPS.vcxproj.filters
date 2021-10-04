@@ -15,7 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ProcessManagementMain.cpp">
+    <ClInclude Include="GPS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GPSMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
