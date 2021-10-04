@@ -6,7 +6,7 @@ int main()
 {
 	while (1)
 	{
-		Console::WriteLine("hell yeah!");
+		Console::WriteLine("GPS Open");
 	}
 	return 0;
 }
