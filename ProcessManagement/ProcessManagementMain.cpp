@@ -15,7 +15,7 @@ using namespace System::Net::Sockets;
 using namespace System::Net;
 using namespace System::Text;
 
-#define NUM_UNITS 3
+#define NUM_UNITS 4
 
 bool IsProcessRunning(const char* processName);
 void StartProcesses();
@@ -26,15 +26,14 @@ TCHAR Units[10][20] = //
 	TEXT("GPS.exe"),
 	TEXT("Camera.exe"),
 	TEXT("Display.exe"),
-	TEXT("LASER.exe"),
 	TEXT("VehicleControl.exe"),
+	TEXT("LASER.exe")
 };
 
 int main()
 {
 	//start all 5 modules
 	StartProcesses();
-	Sleep(2000);
 	return 0;
 }
 
