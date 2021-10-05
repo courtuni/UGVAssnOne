@@ -8,8 +8,10 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
-
+#include <conio.h>
 #include <turbojpeg.h>
+#include <stdio.h>
+#include <iostream>
 
 void display();
 void idle();
@@ -22,6 +24,7 @@ zmq::socket_t subscriber(context, ZMQ_SUB);
 
 int main(int argc, char** argv)
 {
+	Console::WriteLine("Camera On");
 	//Define window size
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
@@ -42,6 +45,11 @@ int main(int argc, char** argv)
 	subscriber.setsockopt(ZMQ_SUBSCRIBE, "", 0);
 
 	glutMainLoop();
+
+	while (1)
+	{
+		Console::WriteLine("Camera Working");
+	}
 
 	return 1;
 }
