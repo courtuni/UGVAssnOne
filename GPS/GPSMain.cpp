@@ -6,7 +6,7 @@ int main()
 {
 	while (1)
 	{
-		Console::WriteLine("GPS Open");
+		Console::WriteLine("Framework Versions Changing");
 	}
 	return 0;
 }
