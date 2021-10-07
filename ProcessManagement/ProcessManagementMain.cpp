@@ -56,7 +56,7 @@ int main()
 		{ "Display", 0, 0, 10, gcnew Process },
 		{ "GPS",	 0, 0, 10, gcnew Process },
 		{ "Laser",	 0, 0, 10, gcnew Process },
-		{ "Vehicle", 0, 0, 10, gcnew Process },
+		{ "VehicleControl", 0, 0, 10, gcnew Process },
 	};
 
 	// Creation and access request of shared memory
@@ -71,10 +71,11 @@ int main()
 		if (Process::GetProcessesByName(ProcessHealthList[i].ModuleName)->Length == 0)
 		{
 			ProcessHealthList[i].ProcessName = gcnew Process;
-			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\users\\courtney\\source\\repos\\ugvassnone\\Debug";
+			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\Courtney\\Source\\Repos\\UGVAssnOne\\Debug";
+			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
 			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
 			ProcessHealthList[i].ProcessName->Start();
-			Console::WriteLine("Process" + ProcessHealthList[i].ModuleName + ".exe has started.");
+			Console::WriteLine("Process " + ProcessHealthList[i].ModuleName + ".exe has started.");
 		}
 	}
 
@@ -84,7 +85,13 @@ int main()
 	// Main Loop
 	while (!_kbhit())
 	{
-		Console::WriteLine("Process Management Still Happy");
+		for (int i = 0; i < ProcessHealthList->Length; i++)
+		{
+			// Console::WriteLine("Process Management Still Happy");
+			Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
+		}
+		Console::WriteLine(" ");
+		Sleep(500);
 	}
 
 	return 0;
