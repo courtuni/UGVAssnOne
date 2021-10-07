@@ -18,6 +18,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Display", "Display\Display.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VehicleControl", "VehicleControl\VehicleControl.vcxproj", "{1BCF62E4-A95D-4C92-8E90-DE58BA13915F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Laser", "Laser\Laser.vcxproj", "{10775F90-A8F8-4284-ADB6-086D50B75625}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -66,6 +68,14 @@ Global
 		{1BCF62E4-A95D-4C92-8E90-DE58BA13915F}.Release|x64.Build.0 = Release|x64
 		{1BCF62E4-A95D-4C92-8E90-DE58BA13915F}.Release|x86.ActiveCfg = Release|Win32
 		{1BCF62E4-A95D-4C92-8E90-DE58BA13915F}.Release|x86.Build.0 = Release|Win32
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Debug|x64.ActiveCfg = Debug|x64
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Debug|x64.Build.0 = Debug|x64
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Debug|x86.ActiveCfg = Debug|Win32
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Debug|x86.Build.0 = Debug|Win32
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Release|x64.ActiveCfg = Release|x64
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Release|x64.Build.0 = Release|x64
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Release|x86.ActiveCfg = Release|Win32
+		{10775F90-A8F8-4284-ADB6-086D50B75625}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
