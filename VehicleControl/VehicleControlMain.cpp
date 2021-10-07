@@ -1,8 +1,6 @@
 #using <System.dll>
 #include <Windows.h>
 #include <conio.h>
-
-
 #include "SMObject.h"
 #include <smstructs.h>
 
