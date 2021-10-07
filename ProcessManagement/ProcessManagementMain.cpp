@@ -16,7 +16,7 @@ using namespace System::Text;
 using namespace System::Diagnostics;
 using namespace System::Threading;
 
-#define NUM_UNITS 4
+#define NUM_UNITS 5
 
 bool IsProcessRunning(const char* processName);
 void StartProcesses();
@@ -28,7 +28,7 @@ TCHAR Units[10][20] = //
 	TEXT("Camera.exe"),
 	TEXT("Display.exe"),
 	TEXT("VehicleControl.exe"),
-	TEXT("LASER.exe")
+	TEXT("Laser.exe")
 };
 
 // put in header file?
