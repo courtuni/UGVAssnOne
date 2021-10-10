@@ -15,15 +15,16 @@ using namespace System::Text;
 
 int main()
 {
-	int PortNumber = 2111;
+	int PortNumber = 23000;
 
 	TcpClient^ Client;
 
 	array<unsigned char>^ SendData;
 	array<unsigned char>^ ReadData;
-
+	array<unsigned char>^ AuthData;
 
 	String^ AskScan = gcnew String("sRN LMDscandata");
+	String^ StudID = gcnew String("5175357\n");
 	String^ ResponseData;
 
 	Client = gcnew TcpClient("192.168.1.200", PortNumber);
@@ -34,17 +35,25 @@ int main()
 	Client->ReceiveBufferSize = 1024;
 	Client->SendBufferSize = 1024;
 
-
+	AuthData = gcnew array<unsigned char>(StudID->Length);
 	SendData = gcnew array<unsigned char>(16);
 	ReadData = gcnew array<unsigned char>(2500);
-
-	SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+		
+	/*SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);*/
 
 	NetworkStream^ Stream = Client->GetStream();
 
-	//while () {
 
-	//}
+	//Authenticate User
+
+	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
+	Stream->Write(AuthData, 0, AuthData->Length);
+
+	System::Threading::Thread::Sleep(100);
+
+	Stream->Read(ReadData, 0, ReadData->Length);
+	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+	Console::WriteLine(ResponseData);
 
 
 
@@ -62,12 +71,11 @@ int main()
 
 	while (1)
 	{
-		//Console::WriteLine("This is a laser");
-		//Sleep(2000);
+		SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+
 		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
 		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
-		//Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
-		//Thread::Sleep(25);
+		Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
 
 		Stream->WriteByte(0x02);
 		Stream->Write(SendData, 0, SendData->Length);
