@@ -38,6 +38,10 @@
 #include "Messages.hpp"
 #include "HUD.hpp"
 
+#include "SMStructs.h"
+
+#include "SMObject.h"
+
 void display();
 void reshape(int width, int height);
 void idle();
@@ -64,8 +68,23 @@ Vehicle * vehicle = NULL;
 double speed = 0;
 double steering = 0;
 
+ProcessManagement* PMData;
+
 //int _tmain(int argc, _TCHAR* argv[]) {
 int main(int argc, char ** argv) {
+
+	//Declaration
+	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	//SM Creation and seeking access
+	double TimeStamp;
+	__int64 Frequency, Counter;
+	int Shutdown = 0x00;
+
+	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+	PMData = (ProcessManagement*)PMObj.pData;
+
 
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
@@ -174,6 +193,11 @@ double getTime()
 }
 
 void idle() {
+
+	if (PMData->Shutdown.Status)
+	{
+		exit(0);
+	}
 
 	if (KeyManager::get()->isAsciiKeyPressed('a')) {
 		Camera::get()->strafeLeft();

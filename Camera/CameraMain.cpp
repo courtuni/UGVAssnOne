@@ -14,13 +14,25 @@ void display();
 void idle();
 
 GLuint tex;
-
+ProcessManagement* PMData;
 //ZMQ settings
 zmq::context_t context(1);
 zmq::socket_t subscriber(context, ZMQ_SUB);
 
 int main(int argc, char** argv)
 {
+	//Declaration
+	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	//SM Creation and seeking access
+	double TimeStamp;
+	__int64 Frequency, Counter;
+	int Shutdown = 0x00;
+
+	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+	PMData = (ProcessManagement*)PMObj.pData;
+
 	//Define window size
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
@@ -64,7 +76,11 @@ void display()
 }
 void idle()
 {
-
+	if (PMData->Shutdown.Status)
+	{
+		exit(0);
+	}
+		
 	//receive from zmq
 	zmq::message_t update;
 	if (subscriber.recv(&update, ZMQ_NOBLOCK))
@@ -92,6 +108,7 @@ void idle()
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, buffer);
 		delete[] buffer;
 	}
+
 
 	display();
 }

@@ -18,6 +18,8 @@ using namespace System::Threading;
 
 #define NUM_UNITS 5
 
+int main();
+
 bool IsProcessRunning(const char* processName);
 void StartProcesses();
 
@@ -63,14 +65,16 @@ int main()
 	PMObj.SMCreate();
 	PMObj.SMAccess();
 
-	// Creation of PMData as type Process Management, through typecast of PMObject pData 
+	// Creation of PMData as type Process Management, throughct pData 
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
 
+	// Start Diagnostics for all
 	for (int i = 0; i < ProcessHealthList->Length; i++)
 	{
 		if (Process::GetProcessesByName(ProcessHealthList[i].ModuleName)->Length == 0)
 		{
 			ProcessHealthList[i].ProcessName = gcnew Process;
+			// TODO remove magic string for working directory
 			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\Courtney\\Source\\Repos\\UGVAssnOne\\Debug";
 			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
 			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
@@ -85,6 +89,7 @@ int main()
 	// Main Loop
 	while (!_kbhit())
 	{
+		// Diagnostics
 		for (int i = 0; i < ProcessHealthList->Length; i++)
 		{
 			// Console::WriteLine("Process Management Still Happy");
@@ -93,6 +98,11 @@ int main()
 		Console::WriteLine(" ");
 		Sleep(500);
 	}
+
+	PMData->Shutdown.Status = 0x01;
+
+	//Shutdown processes
+	//ShutdownProcesses();
 
 	return 0;
 }
@@ -115,6 +125,8 @@ bool IsProcessRunning(const char* processName)
 	CloseHandle(snapshot);
 	return exists;
 }
+
+
 
 
 void StartProcesses()
@@ -140,4 +152,3 @@ void StartProcesses()
 		}
 	}
 }
-
