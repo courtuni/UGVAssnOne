@@ -1,8 +1,6 @@
 #using <System.dll>
 #include <Windows.h>
 #include <conio.h>
-
-
 #include "SMObject.h"
 #include <smstructs.h>
 
@@ -29,7 +27,7 @@ int main()
 	{
 		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
 		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
-		Console::WriteLine("Vehicle time stamp  : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
+		Console::WriteLine("VehicleControl time stamp  : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
 		Thread::Sleep(25);
 		if (PMData->Shutdown.Status)
 			break;

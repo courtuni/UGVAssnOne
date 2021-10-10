@@ -6,16 +6,19 @@
 #include <stdio.h>
 #include <iostream>
 #include <conio.h>
-
-#include "SMStructs.h"
+#include <smstructs.h>
 #include "SMObject.h"
 
 using namespace System;
 using namespace System::Net::Sockets;
 using namespace System::Net;
 using namespace System::Text;
+using namespace System::Diagnostics;
+using namespace System::Threading;
 
 #define NUM_UNITS 5
+
+int main();
 
 bool IsProcessRunning(const char* processName);
 void StartProcesses();
@@ -30,10 +33,77 @@ TCHAR Units[10][20] = //
 	TEXT("Laser.exe")
 };
 
+// put in header file?
+value struct UGVProcessHealth
+{
+	String^ ModuleName;
+	int Critical;
+	int CrashCount;
+	int CrashCountLimit;
+	Process^ ProcessName;
+};
+
+
+
 int main()
 {
-	//start all 5 modules
+		// Initialisation of shared memory object for Process Management
+	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	
+	// Initialisation of array of UGV Processes' health
+	// Order: module name, critical flag, crash count, crash count limit, process name
+	array<UGVProcessHealth>^ ProcessHealthList = gcnew array<UGVProcessHealth>
+	{
+		{ "Camera",	 0, 0, 10, gcnew Process },
+		{ "Display", 0, 0, 10, gcnew Process },
+		{ "GPS",	 0, 0, 10, gcnew Process },
+		{ "Laser",	 0, 0, 10, gcnew Process },
+		{ "VehicleControl", 0, 0, 10, gcnew Process },
+	};
+
+	// Creation and access request of shared memory
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+
+	// Creation of PMData as type Process Management, throughct pData 
+	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
+
+	// Start Diagnostics for all
+	for (int i = 0; i < ProcessHealthList->Length; i++)
+	{
+		if (Process::GetProcessesByName(ProcessHealthList[i].ModuleName)->Length == 0)
+		{
+			ProcessHealthList[i].ProcessName = gcnew Process;
+			// TODO remove magic string for working directory
+			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\z5175357\\Source\\Repos\\UGVAssnOne\\Debug";
+			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
+			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
+			ProcessHealthList[i].ProcessName->Start();
+			Console::WriteLine("Process " + ProcessHealthList[i].ModuleName + ".exe has started.");
+		}
+	}
+
+	// Start all 5 modules
 	StartProcesses();
+
+	// Main Loop
+	while (!_kbhit())
+	{
+		// Diagnostics
+		for (int i = 0; i < ProcessHealthList->Length; i++)
+		{
+			// Console::WriteLine("Process Management Still Happy");
+			Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
+		}
+		Console::WriteLine(" ");
+		Sleep(500);
+	}
+
+	PMData->Shutdown.Status = 0x01;
+
+	//Shutdown processes
+	//ShutdownProcesses();
+
 	return 0;
 }
 
@@ -57,6 +127,8 @@ bool IsProcessRunning(const char* processName)
 }
 
 
+
+
 void StartProcesses()
 {
 	STARTUPINFO s[10];
@@ -76,8 +148,7 @@ void StartProcesses()
 				_getch();
 			}
 			std::cout << "Started: " << Units[i] << std::endl;
-			Sleep(100);
+			Sleep(10000);
 		}
 	}
 }
-
