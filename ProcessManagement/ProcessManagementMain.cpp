@@ -47,8 +47,13 @@ value struct UGVProcessHealth
 
 int main()
 {
-		// Initialisation of shared memory object for Process Management
+	// Initialisation of shared memory object for Process Management
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+
+	// Creation and access request of shared memory
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+
 	
 	// Initialisation of array of UGV Processes' health
 	// Order: module name, critical flag, crash count, crash count limit, process name
@@ -61,9 +66,7 @@ int main()
 		{ "VehicleControl", 0, 0, 10, gcnew Process },
 	};
 
-	// Creation and access request of shared memory
-	PMObj.SMCreate();
-	PMObj.SMAccess();
+
 
 	// Creation of PMData as type Process Management, throughct pData 
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
@@ -93,17 +96,18 @@ int main()
 		for (int i = 0; i < ProcessHealthList->Length; i++)
 		{
 			// Console::WriteLine("Process Management Still Happy");
-			Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
+			// Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
 		}
-		Console::WriteLine(" ");
+		//Console::WriteLine(" ");
+		//Console::WriteLine(" ");
 		Sleep(500);
+
+		PMData->Heartbeat.Flags.Laser = 0;
+		//Console::WriteLine(PMData->Heartbeat.Flags.Laser);
+		PMData->Heartbeat.Flags.ProcessManagement = 1;
 	}
 
 	PMData->Shutdown.Status = 0x01;
-
-	//Shutdown processes
-	//ShutdownProcesses();
-
 	return 0;
 }
 

@@ -22,7 +22,9 @@ int main()
 	int Shutdown = 0x00;
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
-	PMObj.SMCreate();
+
+	// Access request of shared memory
+	//PMObj.SMCreate();
 	PMObj.SMAccess();
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
 

@@ -13,7 +13,7 @@ using namespace System::Net::Sockets;
 using namespace System::Net;
 using namespace System::Text;
 
-//
+// stream information from LMS manual
 //struct LaserStream {
 //	sRA / sSN LMDscandata
 //		VersionNumber
@@ -65,6 +65,7 @@ int main()
 {
 	//Declaration of PMObj
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	SMObject LaserObj(TEXT("Laser"), sizeof(SM_Laser));
 	
 	//SM Creation and seeking access
 	double TimeStamp;
@@ -73,8 +74,14 @@ int main()
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
 	PMObj.SMCreate();
+	LaserObj.SMCreate();
+	// Access request of shared memory
 	PMObj.SMAccess();
+	LaserObj.SMAccess();
+
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
+
+	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
 
 	// Port number of Laser
 	int PortNumber = 23000;
@@ -116,22 +123,49 @@ int main()
 	Stream->Read(ReadData, 0, ReadData->Length);
 	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 	Console::WriteLine(ResponseData);
+	
+	Console::WriteLine(" Laser Heartbeat is: " + PMData->Heartbeat.Flags.Laser);
 
+	int ResponseBufferCount = 0;
+	int ResponseBufferLimit = 10;
+	
 	while (1)
 	{
 		// Check status of Process Management
-		if (PMData->Shutdown.Status || PMData->Heartbeat.Flags.ProcessManagement == 1)
+
+		if (PMData->Heartbeat.Flags.Laser == 1)
 		{
-			Console::WriteLine("Shutting down.");
+			if (ResponseBufferCount > ResponseBufferLimit)
+			{
+				Console::WriteLine("No Process Management response, shutting down.");
+				break;
+			}
+			else
+			{
+				ResponseBufferCount++;
+			}
+		}
+		else if (PMData->Shutdown.Status)
+		{
+			Console::WriteLine("Routine shutdown.");
 			break;
 		}
+		else
+		{
+			Console::WriteLine("Received Process Management response.");
+			ResponseBufferCount = 0;
+		}
+
 
 		// Get timestamp of Laser
+
 		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
 		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
 		Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
 
+
 		// Scan for beginning of Laser information
+
 		SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
 
 		Stream->WriteByte(0x02);
@@ -140,16 +174,28 @@ int main()
 
 		System::Threading::Thread::Sleep(10);
 
+
 		// Read and decode Laser information
+
 		Stream->Read(ReadData, 0, ReadData->Length);
 		ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 		Console::WriteLine(ResponseData);
 
-		// Set Laser heartbeat to 1 - Laser is alive
+
+		// Print Laser coordinates in [x,y]
+
+		for (int i = 0; i < 361; i++) {
+			Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[356]), (LaserData->y[i]));
+		}
+		
+
+		// Set Laser heartbeat to 1 (Laser is alive)
+
 		PMData->Heartbeat.Flags.Laser = 1;
+		Sleep(100);
 	}
 
-	Stream->Close();
-	Client->Close();
+	//Stream->Close();
+	//Client->Close();
 	return 0;
 }
