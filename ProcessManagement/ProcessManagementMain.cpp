@@ -47,6 +47,13 @@ value struct UGVProcessHealth
 
 int main()
 {
+	//DWORD SolDir = GetCurrentDirectory(0, NULL);
+	////SolDir = getcwd();
+	int ResponseBufferCount = 0;
+	int ResponseBufferLimit = 10;
+
+	//Console::WriteLine((String*)SolDir);
+
 	// Initialisation of shared memory object for Process Management
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
 
@@ -93,6 +100,23 @@ int main()
 	while (!_kbhit())
 	{
 		// Diagnostics
+		// Check Laser
+
+		if (PMData->Heartbeat.Flags.Laser == 0)
+		{
+			Console::WriteLine("No Laser response, waiting");
+			if (ResponseBufferCount > ResponseBufferLimit)
+			{
+				Console::WriteLine("No Laser response, shutting down.");
+				break;
+			}
+			else
+			{
+				ResponseBufferCount++;
+			}
+		}
+
+		
 		for (int i = 0; i < ProcessHealthList->Length; i++)
 		{
 			// Console::WriteLine("Process Management Still Happy");

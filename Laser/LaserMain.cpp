@@ -63,27 +63,33 @@ using namespace System::Text;
 
 int main()
 {
-	//Declaration of PMObj
+	// Declarations and Memory Setup
+
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
 	SMObject LaserObj(TEXT("Laser"), sizeof(SM_Laser));
-	
-	//SM Creation and seeking access
+
 	double TimeStamp;
 	__int64 Frequency, Counter;
 	int Shutdown = 0x00;
+	int ResponseBufferCount = 0;
+	int ResponseBufferLimit = 10;
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
+
+	//Shared Memory creation and seeking access
+
 	PMObj.SMCreate();
-	LaserObj.SMCreate();
-	// Access request of shared memory
 	PMObj.SMAccess();
+
+	LaserObj.SMCreate();
 	LaserObj.SMAccess();
 
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
-
 	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
 
-	// Port number of Laser
+
+	// Laser Data Declarations
+
 	int PortNumber = 23000;
 
 	TcpClient^ Client;
@@ -112,8 +118,7 @@ int main()
 
 	NetworkStream^ Stream = Client->GetStream();
 
-
-	//Authenticate User
+	// User Authentication
 
 	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
 	Stream->Write(AuthData, 0, AuthData->Length);
@@ -123,11 +128,7 @@ int main()
 	Stream->Read(ReadData, 0, ReadData->Length);
 	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 	Console::WriteLine(ResponseData);
-	
-	Console::WriteLine(" Laser Heartbeat is: " + PMData->Heartbeat.Flags.Laser);
 
-	int ResponseBufferCount = 0;
-	int ResponseBufferLimit = 10;
 	
 	while (1)
 	{
@@ -184,7 +185,8 @@ int main()
 
 		// Print Laser coordinates in [x,y]
 
-		for (int i = 0; i < 361; i++) {
+		for (int i = 0; i < 361; i++)
+		{
 			Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[356]), (LaserData->y[i]));
 		}
 		
@@ -195,7 +197,7 @@ int main()
 		Sleep(100);
 	}
 
-	//Stream->Close();
-	//Client->Close();
+	Stream->Close();
+	Client->Close();
 	return 0;
 }
