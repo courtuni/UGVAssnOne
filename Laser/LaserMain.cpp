@@ -83,6 +83,11 @@ int main()
 			Console::WriteLine("Shutting down.");
 			break;
 		}*/
+		if (PMData->Shutdown.Status)
+		{
+			Console::WriteLine("Shutting down.");
+			break;
+		}
 
 		// Get timestamp of Laser
 		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
@@ -125,16 +130,18 @@ int main()
 		int MeasuredDataPos = NumberChannelsPos + NumberChannelsSize;
 		int MeasuredDataSize = 6; // 5 + 1
 		Console::WriteLine("MeasuredDataPos: "+ ReadData[MeasuredDataPos]);
+
+		int DataPos = MeasuredDataPos + MeasuredDataSize;
 		// note - assuming single channel
 
 		// Scaling Factor
-		int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
-		byte b1 = ReadData[ScalingFactorPos];
-		byte b2 = ReadData[ScalingFactorPos + 1];
-		byte b3 = ReadData[ScalingFactorPos + 2];
-		byte b4 = ReadData[ScalingFactorPos + 3];
-		float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
-		Console::WriteLine(ScalingFactor);
+		//int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
+		//byte b1 = ReadData[ScalingFactorPos];
+		//byte b2 = ReadData[ScalingFactorPos + 1];
+		//byte b3 = ReadData[ScalingFactorPos + 2];
+		//byte b4 = ReadData[ScalingFactorPos + 3];
+		//float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
+		//Console::WriteLine(ScalingFactor);
 
 		// Print Laser coordinates in [x,y]
 
