@@ -13,58 +13,11 @@ using namespace System::Net::Sockets;
 using namespace System::Net;
 using namespace System::Text;
 
-//
-//struct LaserStream {
-//	sRA / sSN LMDscandata
-//		VersionNumber
-//		DeviceNumber
-//		SerialNumber
-//		DeviceStatus
-//		MessageCounter
-//		ScanCounter
-//		PowerUpDuration
-//		TransmissionDuration
-//		InputStatus
-//		OutputStatus
-//		ReservedByteA
-//		ScanningFrequency
-//		MeasurementFrequency
-//		NumberEncoders
-//		[EncoderPosition
-//		EncoderSpeed]
-//	NumberChannels16Bit
-//		[MeasuredDataContent
-//		ScalingFactor
-//		ScalingOffset
-//		StartingAngle
-//		AngularStepWidth
-//		NumberData
-//		[Data_1
-//		Data_n]]
-//	NumberChannels8Bit
-//		[MeasuredDataContent
-//		ScalingFactor
-//		ScalingOffset
-//		StartingAngle
-//		AngularStepWidth
-//		[NumberData
-//		Data_1
-//		Data_n]
-//	Position
-//		[XPosition
-//		YPosition
-//		ZPosition
-//		XRotation
-//		YRotation
-//		ZRotation
-//		RotationType]
-//	Name
-//}
-
 int main()
 {
 	//Declaration of PMObj
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
 	
 	//SM Creation and seeking access
 	double TimeStamp;
@@ -72,9 +25,14 @@ int main()
 	int Shutdown = 0x00;
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
-	PMObj.SMCreate();
+	//PMObj.SMCreate();
 	PMObj.SMAccess();
+	LaserObj.SMCreate();
+	LaserObj.SMAccess();
+
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
+	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
+
 
 	// Port number of Laser
 	int PortNumber = 23000;
@@ -120,7 +78,12 @@ int main()
 	while (1)
 	{
 		// Check status of Process Management
-		if (PMData->Shutdown.Status || PMData->Heartbeat.Flags.ProcessManagement == 1)
+		/*if (PMData->Shutdown.Status || PMData->Heartbeat.Flags.ProcessManagement == 1)
+		{
+			Console::WriteLine("Shutting down.");
+			break;
+		}*/
+		if (PMData->Shutdown.Status)
 		{
 			Console::WriteLine("Shutting down.");
 			break;
@@ -142,10 +105,55 @@ int main()
 
 		// Read and decode Laser information
 		Stream->Read(ReadData, 0, ReadData->Length);
+		for (int i = 0; i < ReadData->Length; i++)
+		{
+			Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
+		}
 		ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 		Console::WriteLine(ResponseData);
 
-		// Set Laser heartbeat to 1 - Laser is alive
+		//TODO make proper offset variable
+		//int offset = 110;
+
+		// Offset calculations
+
+		int NumberEncodersPos = 75; // const message size until this position
+		// int NumberEncoders = ReadData[NumberEncodersPos] * 256 + ReadData[NumberEncodersPos + 1];
+		int NumberEncoders = 0; // 0 ENCODERS
+		Console::WriteLine(" ReadData[NumberEncodersPos]: " + ReadData[NumberEncodersPos]);
+		Console::WriteLine("NumberEncoders: " + NumberEncoders);
+		int EncoderInfoSize = 8;
+		int NumberEncodersSize = 3;
+		int NumberChannelsPos = NumberEncodersPos + NumberEncoders * EncoderInfoSize + NumberEncodersSize;
+		int NumberChannelsSize = 3;
+
+		int MeasuredDataPos = NumberChannelsPos + NumberChannelsSize;
+		int MeasuredDataSize = 6; // 5 + 1
+		Console::WriteLine("MeasuredDataPos: "+ ReadData[MeasuredDataPos]);
+
+		int DataPos = MeasuredDataPos + MeasuredDataSize;
+		// note - assuming single channel
+
+		// Scaling Factor
+		//int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
+		//byte b1 = ReadData[ScalingFactorPos];
+		//byte b2 = ReadData[ScalingFactorPos + 1];
+		//byte b3 = ReadData[ScalingFactorPos + 2];
+		//byte b4 = ReadData[ScalingFactorPos + 3];
+		//float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
+		//Console::WriteLine(ScalingFactor);
+
+		// Print Laser coordinates in [x,y]
+
+		for (int i = 0; i < 361; i++)
+		{
+			//LaserData->x[i] = 
+			//Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[i]), (LaserData->y[i]));
+		}
+		
+
+		// Set Laser heartbeat to 1 (Laser is alive)
+
 		PMData->Heartbeat.Flags.Laser = 1;
 	}
 
