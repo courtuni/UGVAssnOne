@@ -32,9 +32,11 @@ ref class UGV_module
 {
 	public:
 		virtual int connect(String^ hostName, int portNumber) = 0;	// Establish TCP connection
+		virtual int disconnect() = 0;
+		virtual int authenticateUser(String^ StudID) = 0;
 		virtual int setupSharedMemory() = 0;						// Create and access shared memory objects
 		virtual int getData() = 0;									// Get data from sensor (GPS / Laser)
-		virtual int checkData() = 0;								// Check Data is correct (eg headers)
+		virtual int calculateData() = 0;								// Check Data is correct (eg headers)
 		virtual int sendDataToSharedMemory() = 0;					// Save Data in shared memory structures
 		virtual bool getShutdownFlag() = 0;							// Get Shutdown signal for module, from Process Management SM
 		virtual int setHeartbeat(bool heartbeat) = 0;				// Update heartbeat signal for module
@@ -74,7 +76,7 @@ ref class UGV_module
 		// Timestamp Variables
 		double TimeStamp;
 		__int64 Frequency, Counter;
-		int Shutdown;
+		unsigned short Shutdown;
 
 		ProcessManagement* PMData;
 		SMObject* ProcessManagementData;	// Filled in setupSharedMemory(). For accessing PM shared Memory

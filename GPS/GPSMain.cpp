@@ -16,34 +16,47 @@ int main()
 {
 	// Create instance of GPS Functions
 	GPS GPSFunctions;
+
+	// Set up shared memory
 	GPSFunctions.setupSharedMemory();
 	
-	// Port number of GPS
+	// Connect to UGV
 	int PortNumber = 24000;
 	String^ HostName = "192.168.1.200";
 
+	Console::WriteLine("Connecting...");
 	GPSFunctions.connect(HostName, PortNumber);
 
-	// Student ID
+	// Authenticate with Student ID
 	String^ StudID = gcnew String("5175357\n");
+
+	Console::WriteLine("Authenticating...");
 	GPSFunctions.authenticateUser(StudID);
-
-	// Timestamp Variables
-	double^ TimeStamp;
-	__int64 Frequency, Counter;
-
-	// Shutdown Variable
-	int Shutdown;
 
 	while (1)
 	{
-		TimeStamp = GPSFunctions.getTimestamp();
-		Console::WriteLine("GPS time stamp      : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
-
-		if (PMData->Shutdown.Status)
+		Console::WriteLine("Health Checking...");
+		// Health check
+		if (GPSFunctions.getShutdownFlag())
+		{
+			Console::WriteLine("Shutting down.");
 			break;
+		}
 		if (_kbhit())
 			break;
+		
+		Console::WriteLine("Setting Heartbeat...");
+		GPSFunctions.setHeartbeat(1);
+
+		//GPSFunctions.getTimestamp();
+
+		// GPS Data
+		Console::WriteLine("Getting Data...");
+		GPSFunctions.getData();
+		Console::WriteLine("Sending Data...");
+		GPSFunctions.sendDataToSharedMemory();
+		Console::WriteLine("Printing Data...");
+		GPSFunctions.printData();
 	}
 
 	return 0;
@@ -51,64 +64,61 @@ int main()
 
 int GPS::getTimestamp()
 {
-	QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
-	TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
-	Thread::Sleep(25);
+	//QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
+	//TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
+	//Console::WriteLine("GPS time stamp      : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
+	//Thread::Sleep(25);
+	return 1;
 }
 
 int GPS::connect(String^ HostName, int PortNumber)
 {
-	TcpClient^ Client;
+	GPSClient = gcnew TcpClient(HostName, PortNumber);
 
-	String^ AskScan = gcnew String("sRN LMDscandata");
-
-	Client = gcnew TcpClient(HostName, PortNumber);
-
-	Client->NoDelay = true;
-	Client->ReceiveTimeout = 500; //ms
-	Client->SendTimeout = 500; //ms
-	Client->ReceiveBufferSize = 1024;
-	Client->SendBufferSize = 1024;
+	GPSClient->NoDelay = true;
+	GPSClient->ReceiveTimeout = 500; //ms
+	GPSClient->SendTimeout = 500; //ms
+	GPSClient->ReceiveBufferSize = 1024;
+	GPSClient->SendBufferSize = 1024;
 
 
-	SendData = gcnew array<unsigned char>(16);
+	//SendData = gcnew array<unsigned char>(16);
 	ReadData = gcnew array<unsigned char>(2500);
 	ReceiveData = gcnew array<unsigned char>(5000);
 
-	NetworkStream^ Stream = Client->GetStream();
+	//NetworkStream^GPSStream = GPSClient->GetStream();
+	GPSStream = GPSClient->GetStream();
 
+	return 1;
+}
+
+
+int GPS::disconnect()
+{
+	GPSStream->Close();
+	GPSClient->Close();
 	return 1;
 }
 
 int GPS::authenticateUser(String^ StudID)
 {
-	
-	//array<unsigned char>^ AuthData;
-	
-
 	AuthData = gcnew array<unsigned char>(StudID->Length);
-
 	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
 
-	Stream->Write(AuthData, 0, AuthData->Length);
-
+	GPSStream->Write(AuthData, 0, AuthData->Length);
 	System::Threading::Thread::Sleep(100);
 
-
+	return 1;
 }
 
 int GPS::setupSharedMemory()
 {
+	//TODO: PMObj should be accessed, not created again
 	//Declaration of PMObj
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
 	SMObject GPSObj(TEXT("SM_GPS"), sizeof(SM_GPS));
 
 	//SM Creation and seeking access
-	Shutdown = 0x00;
-	double TimeStamp;
-	__int64 Frequency, Counter;
-	//int Shutdown = 0x00;
-
 	PMObj.SMCreate();
 	PMObj.SMAccess();
 	GPSObj.SMCreate();
@@ -122,59 +132,69 @@ int GPS::setupSharedMemory()
 
 int GPS::getData()
 {
-	Stream->Read(ReadData, 0, ReadData->Length);
+
+	String^ AskScan = gcnew String("sRN LMDscandata");
+
+	SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+
+	GPSStream->WriteByte(0x02);
+	GPSStream->Write(SendData, 0, SendData->Length);
+	GPSStream->WriteByte(0x03);
+
+	System::Threading::Thread::Sleep(10);
+
+
+	ReadData = gcnew array<unsigned char>(2500);
+
+	GPSStream->Read(ReadData, 0, ReadData->Length);
 	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 	Console::WriteLine(ResponseData);
 
-	// YOUR CODE HERE
 	return 1;
 }
 
-int GPS::checkData()
+int GPS::calculateData()
 {
-	// YOUR CODE HERE
 	return 1;
 }
 
 int GPS::printData()
 {
+	Console::WriteLine("Northing: " + GPSData->northing);
+	Console::WriteLine("Easting: " + GPSData->easting);
+	Console::WriteLine("Height: " + GPSData->height);
+
+	return 1;
+}
+
+int GPS::sendDataToSharedMemory()
+{
 	// Get header length
 	int HeaderLength = ReadData[3];
 
-	// declare data positions
+	// Get data positions - known constants from GPS manual
 	int NorthingPos = HeaderLength + 16;
 	int EastingPos = HeaderLength + 24;
 	int HeightPos = HeaderLength + 32;
 	int CRCPos = HeaderLength + 80;
 
-
 	GPSData->northing = ReadData[NorthingPos];
 	GPSData->easting = ReadData[EastingPos];
 	GPSData->height = ReadData[HeightPos];
 
-	// take northing, easting, crc
-	Console::WriteLine("Northing: " + ReadData[NorthingPos]);
-	Console::WriteLine("Easting: " + ReadData[EastingPos]);
-	Console::WriteLine("Height: " + ReadData[HeightPos]);
-	//Console::WriteLine("CRC: " + ReadData[CRCPos]);
-
-}
-
-int GPS::sendDataToSharedMemory()
-{
-	// YOUR CODE HERE
 	return 1;
 }
 
 bool GPS::getShutdownFlag()
 {
 	// YOUR CODE HERE
-	return 1;
+	Shutdown = PMData->Shutdown.Status;
+	return Shutdown;
 }
 
 int GPS::setHeartbeat(bool heartbeat)
 {
-	// YOUR CODE HERE
+	PMData->Heartbeat.Flags.GPS = heartbeat;
 	return 1;
 }
 

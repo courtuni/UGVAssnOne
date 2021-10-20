@@ -26,7 +26,7 @@ int main()
 	__int64 Frequency, Counter;
 
 	// Shutdown Variable
-	int Shutdown;
+	//int Shutdown;
 
 	////Declaration of PMObj
 	//SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
@@ -51,7 +51,7 @@ int main()
 	//int PortNumber = 23000;
 	//String^ HostName = "192.168.1.200";
 
-	//TcpClient^ Client;
+	//TcpLaserClient^ LaserClient;
 
 	//array<unsigned char>^ SendData;
 	//array<unsigned char>^ ReadData;
@@ -62,20 +62,20 @@ int main()
 	//String^ StudID = gcnew String("5175357\n");
 	//String^ ResponseData;
 
-	//Client = gcnew TcpClient("192.168.1.200", PortNumber);
+	//LaserClient = gcnew TcpLaserClient("192.168.1.200", PortNumber);
 
-	//Client->NoDelay = true;
-	//Client->ReceiveTimeout = 500; //ms
-	//Client->SendTimeout = 500; //ms
-	//Client->ReceiveBufferSize = 1024;
-	//Client->SendBufferSize = 1024;
+	//LaserClient->NoDelay = true;
+	//LaserClient->ReceiveTimeout = 500; //ms
+	//LaserClient->SendTimeout = 500; //ms
+	//LaserClient->ReceiveBufferSize = 1024;
+	//LaserClient->SendBufferSize = 1024;
 
 	//AuthData = gcnew array<unsigned char>(StudID->Length);
 	//SendData = gcnew array<unsigned char>(16);
 	//ReadData = gcnew array<unsigned char>(2500);
 	//ReceiveData = gcnew array<unsigned char>(5000);
 
-	//NetworkStream^ Stream = Client->GetStream();
+	//NetworkStream^ Stream = LaserClient->GetStream();
 
 
 	////Authenticate User
@@ -97,126 +97,101 @@ int main()
 			Console::WriteLine("Shutting down.");
 			break;
 		}*/
-		if (PMData->Shutdown.Status)
+		// Health Check
+		if (LaserFunctions.getShutdownFlag())
 		{
 			Console::WriteLine("Shutting down.");
 			break;
 		}
+		if (_kbhit())
+			break;
 
 		// Get timestamp of Laser
-		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
-		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
-		Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
+		LaserFunctions.getTimestamp();
+
+		// Laser Data
+		LaserFunctions.getData();
+		LaserFunctions.sendDataToSharedMemory();
+		LaserFunctions.printData();
 
 		// Scan for beginning of Laser information
-		SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
 
-		Stream->WriteByte(0x02);
-		Stream->Write(SendData, 0, SendData->Length);
-		Stream->WriteByte(0x03);
-
-		System::Threading::Thread::Sleep(10);
 
 		// Read and decode Laser information
-		Stream->Read(ReadData, 0, ReadData->Length);
-		for (int i = 0; i < ReadData->Length; i++)
-		{
-			Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
-		}
-		ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-		Console::WriteLine(ResponseData);
+		//Stream->Read(ReadData, 0, ReadData->Length);
+		//for (int i = 0; i < ReadData->Length; i++)
+		//{
+		//	Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
+		//}
+		//ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+		//Console::WriteLine(ResponseData);
 
-		//TODO make proper offset variable
-		//int offset = 110;
-
-		// Offset calculations
-
-		int NumberEncodersPos = 75; // const message size until this position
-		// int NumberEncoders = ReadData[NumberEncodersPos] * 256 + ReadData[NumberEncodersPos + 1];
-		int NumberEncoders = 0; // 0 ENCODERS
-		Console::WriteLine(" ReadData[NumberEncodersPos]: " + ReadData[NumberEncodersPos]);
-		Console::WriteLine("NumberEncoders: " + NumberEncoders);
-		int EncoderInfoSize = 8;
-		int NumberEncodersSize = 3;
-		int NumberChannelsPos = NumberEncodersPos + NumberEncoders * EncoderInfoSize + NumberEncodersSize;
-		int NumberChannelsSize = 3;
-
-		int MeasuredDataPos = NumberChannelsPos + NumberChannelsSize;
-		int MeasuredDataSize = 6; // 5 + 1
-		Console::WriteLine("MeasuredDataPos: "+ ReadData[MeasuredDataPos]);
-
-		int DataPos = MeasuredDataPos + MeasuredDataSize;
-		// note - assuming single channel
-
-		// Scaling Factor
-		//int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
-		//byte b1 = ReadData[ScalingFactorPos];
-		//byte b2 = ReadData[ScalingFactorPos + 1];
-		//byte b3 = ReadData[ScalingFactorPos + 2];
-		//byte b4 = ReadData[ScalingFactorPos + 3];
-		//float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
-		//Console::WriteLine(ScalingFactor);
 
 		// Print Laser coordinates in [x,y]
 
-		for (int i = 0; i < 361; i++)
-		{
-			//LaserData->x[i] = 
-			//Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[i]), (LaserData->y[i]));
-		}
+		//for (int i = 0; i < 361; i++)
+		//{
+		//	//LaserData->x[i] = 
+		//	//Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[i]), (LaserData->y[i]));
+		//}
 		
 
 		// Set Laser heartbeat to 1 (Laser is alive)
 
-		PMData->Heartbeat.Flags.Laser = 1;
+		//PMData->Heartbeat.Flags.Laser = 1;
 	}
 
-	Stream->Close();
-	Client->Close();
+
 	return 0;
 }
 
+int Laser::getTimestamp()
+{
+	//QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
+	//TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
+	//Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
+	return 1;
+}
 
 int Laser::connect(String^ HostName, int PortNumber)
 {
-	TcpClient^ Client;
-	String^ AskScan = gcnew String("sRN LMDscandata");
+	//TcpClient^ LaserClient; //already in ugv module
+
+	LaserClient = gcnew TcpClient(HostName, PortNumber);
+
+	LaserClient->NoDelay = true;
+	LaserClient->ReceiveTimeout = 500; //ms
+	LaserClient->SendTimeout = 500; //ms
+	LaserClient->ReceiveBufferSize = 1024;
+	LaserClient->SendBufferSize = 1024;
 
 
-	Client = gcnew TcpClient(HostName, PortNumber);
-
-	Client->NoDelay = true;
-	Client->ReceiveTimeout = 500; //ms
-	Client->SendTimeout = 500; //ms
-	Client->ReceiveBufferSize = 1024;
-	Client->SendBufferSize = 1024;
-
-
-	SendData = gcnew array<unsigned char>(16);
+	//SendData = gcnew array<unsigned char>(16);
 	ReadData = gcnew array<unsigned char>(2500);
 	ReceiveData = gcnew array<unsigned char>(5000);
 
-	NetworkStream^ Stream = Client->GetStream();
+	//NetworkStream^ Stream = LaserClient->GetStream();
+	LaserStream = LaserClient->GetStream();
 
-	// YOUR CODE HERE
+	return 1;
+}
+
+int Laser::disconnect()
+{
+	LaserStream->Close();
+	LaserClient->Close();
 	return 1;
 }
 
 int Laser::authenticateUser(String^ StudID)
 {
-
-	//array<unsigned char>^ AuthData;
-
-
 	AuthData = gcnew array<unsigned char>(StudID->Length);
-
 	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
 
-	Stream->Write(AuthData, 0, AuthData->Length);
-
+	LaserStream->Write(AuthData, 0, AuthData->Length);
 	System::Threading::Thread::Sleep(100);
 
-
+	return 1;
 }
 
 int Laser::setupSharedMemory()
@@ -236,57 +211,113 @@ int Laser::setupSharedMemory()
 	LaserObj.SMCreate();
 	LaserObj.SMAccess();
 
-	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
-	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
+	PMData = (ProcessManagement*)PMObj.pData;
+	LaserData = (SM_Laser*)LaserObj.pData;
 
 	return 1;
 }
 
 int Laser::getData()
 {
+	// Check for known beginning of stream
+	String^ AskScan = gcnew String("sRN LMDscandata");
+
+	SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+
+	LaserStream->WriteByte(0x02);
+	LaserStream->Write(SendData, 0, SendData->Length);
+	LaserStream->WriteByte(0x03);
+
+	System::Threading::Thread::Sleep(10);
+
+	// Read in data at that point
+	ReadData = gcnew array<unsigned char>(2500);
+
 	Stream->Read(ReadData, 0, ReadData->Length);
 	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-	Console::WriteLine(ResponseData);
 
-	// YOUR CODE HERE
 	return 1;
 }
 
-int Laser::checkData()
+int Laser::calculateData()
 {
-	// YOUR CODE HERE
+	// Offset calculations
+	// Known constants from Laser manual
+	int NumberEncodersPos = 75; // const message size until this position
+	int EncoderInfoSize = 8;
+	int NumberEncodersSize = 3;
+	int NumberChannelsSize = 3;
+	int MeasuredDataSize = 6; // 5 + 1
+	int DataGeneralInfoSize = 21;
+
+
+			// int NumberEncoders = ReadData[NumberEncodersPos] * 256 + ReadData[NumberEncodersPos + 1];
+	int NumberEncoders = 0; // assuming 0 ENCODERS for now
+	int NumberChannelsPos = NumberEncodersPos + NumberEncoders * EncoderInfoSize + NumberEncodersSize;
+	int MeasuredDataPos = NumberChannelsPos + NumberChannelsSize;
+	
+	Console::WriteLine("MeasuredDataPos: " + ReadData[MeasuredDataPos]);
+
+	DataPos = MeasuredDataPos + MeasuredDataSize;
+	StartingAngle = ReadData[DataPos + 10];
+	AngularStepWidth = ReadData[DataPos + 15];
+	int dist = (ReadData[DataPos + DataGeneralInfoSize] << 8) | (ReadData[DataPos + DataGeneralInfoSize + 1]);
+	
+	for (int i = 0; i < 361; i++)
+	{
+		LaserData->x[i] = dist * cos(StartingAngle + i * AngularStepWidth);
+		LaserData->y[i] = dist * sin(StartingAngle + i * AngularStepWidth);
+	}
+
+	// note - assuming single channel
+
+			// Scaling Factor
+			//int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
+			//byte b1 = ReadData[ScalingFactorPos];
+			//byte b2 = ReadData[ScalingFactorPos + 1];
+			//byte b3 = ReadData[ScalingFactorPos + 2];
+			//byte b4 = ReadData[ScalingFactorPos + 3];
+			//float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
+			//Console::WriteLine(ScalingFactor);
+
 	return 1;
 }
 
 int Laser::printData()
 {
-	// Get header length
-	int HeaderLength = ReadData[3];
+	// Print raw data
+	Console::WriteLine(ResponseData);
 
-	// declare data positions
-	double NorthingPos = HeaderLength + 16;
-	double EastingPos = HeaderLength + 24;
-	double HeightPos = HeaderLength + 32;
-	int CRCPos = HeaderLength + 80;
+	// Print good data
+	for (int i = 0; i < 361; i++)
+	{
+		Console::WriteLine("x is: " + LaserData->x[i]);
+		Console::WriteLine("y is: " + LaserData->y[i]);
+	}
 
-	// take northing, easting, crc
-	Console::WriteLine("Northing: " + ReadData[NorthingPos]);
-	Console::WriteLine("Easting: " + ReadData[EastingPos]);
-	Console::WriteLine("Height: " + ReadData[HeightPos]);
-	Console::WriteLine("CRC: " + ReadData[CRCPos]);
-
+	return 1;
 }
 
 int Laser::sendDataToSharedMemory()
 {
-	// YOUR CODE HERE
+	// this is currently in calculate data
+	
+	// TODO read in goood calculated data not random readdata at good pos
+	//for (int i = 0; i < 361; i++)
+	//{
+	//	//LaserData->x[i] = ReadData[DataPos + i];
+	//	//LaserData->y[i] = ReadData[DataPos + i];
+	//}
+
 	return 1;
 }
 
 bool Laser::getShutdownFlag()
 {
-	// YOUR CODE HERE
-	return 1;
+	Shutdown = 0;
+	/*Console::WriteLine(PMData->Heartbeat.Status);
+	Shutdown = PMData->Shutdown.Status;*/
+	return Shutdown;
 }
 
 int Laser::setHeartbeat(bool heartbeat)

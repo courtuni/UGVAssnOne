@@ -41,10 +41,10 @@ struct SM_GPS
 struct UnitFlags
 {
 	unsigned char	ProcessManagement : 1,	//NONCRITICAL
-					Laser : 1,				//NONCRITICAL
-					VehicleControl : 1,		//NONCRITICAL
-					GPS : 1,				//NONCRITICAL
-					Display : 1,				//NONCRITICAL
+					Laser : 1,				//CRITICAL
+					VehicleControl : 1,		//CRITICAL
+					GPS : 1,				//CRITICAL
+					Display : 1,			//NONCRITICAL
 					Camera : 1,				//NONCRITICAL
 					Garbage : 2;
 };

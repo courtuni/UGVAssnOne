@@ -12,11 +12,12 @@ ref class GPS : public UGV_module
 
 public:
 	int connect(String^ hostName, int portNumber) override;
+	int disconnect() override;
 	int authenticateUser(String^ StudID) override;
 	int setupSharedMemory() override;
 	int getData() override;
 	int printData() override;
-	int checkData() override;
+	int calculateData() override;
 	int sendDataToSharedMemory() override;
 	bool getShutdownFlag() override;
 	int setHeartbeat(bool heartbeat) override;
@@ -25,6 +26,10 @@ public:
 protected:
 	
 	SM_GPS* GPSData;
+
+	TcpClient^ GPSClient;					// Handle for TCP connection
+	NetworkStream^ GPSStream;				// Handle for TCP data stream
+	String^ GPSResponseData;				// Handle for raw response
 	// YOUR CODE HERE (ADDITIONAL MEMBER VARIABLES THAT YOU MAY WANT TO ADD)
 
 };

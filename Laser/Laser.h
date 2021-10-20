@@ -9,21 +9,29 @@
 
 ref class Laser : public UGV_module
 {
+	public:
 
-public:
-	int connect(String^ hostName, int portNumber) override;
-	int authenticateUser(String^ StudID) override;
-	int setupSharedMemory() override;
-	int getData() override;
-	int printData() override;
-	int checkData() override;
-	int sendDataToSharedMemory() override;
-	bool getShutdownFlag() override;
-	int setHeartbeat(bool heartbeat) override;
-	double^ getTimestamp() override;
-	~Laser();
-protected:
-	SM_Laser* LaserData;
-	// YOUR CODE HERE (ADDITIONAL MEMBER VARIABLES THAT YOU MAY WANT TO ADD)
+		int connect(String^ hostName, int portNumber) override;
+		int disconnect() override;
+		int authenticateUser(String^ StudID) override;
+		int setupSharedMemory() override;
+		int getData() override;
+		int printData() override;
+		int calculateData() override;
+		int sendDataToSharedMemory() override;
+		bool getShutdownFlag() override;
+		int setHeartbeat(bool heartbeat) override;
+		int getTimestamp() override;
+		~Laser();
+	
+	protected:
 
+		TcpClient^ LaserClient;					// Handle for TCP connection
+		NetworkStream^ LaserStream;				// Handle for TCP data stream
+		String^ LaserResponseData;				// Handle for raw response
+
+		SM_Laser* LaserData;
+		int DataPos;
+		INT32 StartingAngle;
+		UINT16 AngularStepWidth;
 };

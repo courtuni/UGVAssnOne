@@ -75,7 +75,7 @@ int main()
 		{
 			ProcessHealthList[i].ProcessName = gcnew Process;
 			// TODO remove magic string for working directory
-			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\z5175357\\Source\\Repos\\UGVAssnOne\\Debug";
+			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\Courtney\\Source\\Repos\\UGVAssnOne\\Debug";
 			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
 			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
 			ProcessHealthList[i].ProcessName->Start();
@@ -85,6 +85,7 @@ int main()
 
 	// Start all 5 modules
 	StartProcesses();
+	PMData->SetUp = 1;
 
 	// Main Loop
 	while (!_kbhit())
@@ -92,11 +93,14 @@ int main()
 		// Diagnostics
 		for (int i = 0; i < ProcessHealthList->Length; i++)
 		{
+			PMData->Heartbeat.Flags.GPS = 0;
 			// Console::WriteLine("Process Management Still Happy");
 			Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
 		}
 		Console::WriteLine(" ");
 		Sleep(500);
+
+		PMData->Heartbeat.Status = 1;
 	}
 
 	PMData->Shutdown.Status = 0x01;
