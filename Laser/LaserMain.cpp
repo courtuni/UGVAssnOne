@@ -5,6 +5,8 @@
 #include <SMObject.h>
 #include <smstructs.h>
 
+#include "Laser.h"
+
 using namespace System;
 using namespace System::Diagnostics;
 using namespace System::Threading;
@@ -20,12 +22,10 @@ int main()
 	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
 	
 	//SM Creation and seeking access
-	double TimeStamp;
-	__int64 Frequency, Counter;
-	int Shutdown = 0x00;
+	Shutdown = 0x00;
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
-	//PMObj.SMCreate();
+	PMObj.SMCreate();
 	PMObj.SMAccess();
 	LaserObj.SMCreate();
 	LaserObj.SMAccess();

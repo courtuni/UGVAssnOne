@@ -38,6 +38,7 @@ ref class UGV_module
 		virtual int sendDataToSharedMemory() = 0;					// Save Data in shared memory structures
 		virtual bool getShutdownFlag() = 0;							// Get Shutdown signal for module, from Process Management SM
 		virtual int setHeartbeat(bool heartbeat) = 0;				// Update heartbeat signal for module
+		virtual int printData() = 0;
 
 		void getError()
 		{
@@ -58,11 +59,23 @@ ref class UGV_module
 
 	protected:
 		int Error;							// Stores last error code
+
+		// Connection Variables
 		TcpClient^ Client;					// Handle for TCP connection
 		NetworkStream^ Stream;				// Handle for TCP data stream
-		array<unsigned char>^ ReadData;		// Array to store sensor Data
+		String^ ResponseData;
 
-		SMObject* ProcessManagementData;	// Filled in setupSharedMemory(). For accessing PM shared Memory
+		array<unsigned char>^ ReadData;		// Array to store sensor Data
+		array<unsigned char>^ SendData;
+		array<unsigned char>^ AuthData;
+		array<unsigned char>^ ReceiveData;
+
+		// Timestamp Variables
+		double^ TimeStamp;
+		__int64 Frequency, Counter;
+		int Shutdown;
+
+		SMObject* PMData;	// Filled in setupSharedMemory(). For accessing PM shared Memory
 		SMObject* SensorData;				// Filled in setupSharedMemory(). For storing sensory data to shared Memory
 
 };
