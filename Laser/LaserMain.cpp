@@ -21,6 +21,13 @@ int main()
 	Laser LaserFunctions;
 	LaserFunctions.setupSharedMemory();
 
+	// Timestamp Variables
+	double^ TimeStamp;
+	__int64 Frequency, Counter;
+
+	// Shutdown Variable
+	int Shutdown;
+
 	////Declaration of PMObj
 	//SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
 	//SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));

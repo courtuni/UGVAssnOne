@@ -39,7 +39,7 @@ ref class UGV_module
 		virtual bool getShutdownFlag() = 0;							// Get Shutdown signal for module, from Process Management SM
 		virtual int setHeartbeat(bool heartbeat) = 0;				// Update heartbeat signal for module
 		virtual int printData() = 0;
-		virtual double^ getTimestamp() = 0;
+		virtual int getTimestamp() = 0;
 
 		void getError()
 		{

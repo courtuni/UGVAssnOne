@@ -20,7 +20,7 @@ public:
 	int sendDataToSharedMemory() override;
 	bool getShutdownFlag() override;
 	int setHeartbeat(bool heartbeat) override;
-	double^ getTimestamp() override;
+	int getTimestamp() override;
 	~GPS();
 protected:
 	

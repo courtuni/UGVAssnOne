@@ -49,7 +49,7 @@ int main()
 	return 0;
 }
 
-double^ GPS::getTimestamp()
+int GPS::getTimestamp()
 {
 	QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
 	TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
@@ -60,13 +60,7 @@ int GPS::connect(String^ HostName, int PortNumber)
 {
 	TcpClient^ Client;
 
-	//array<unsigned char>^ SendData;
-	//array<unsigned char>^ ReadData;
-	//array<unsigned char>^ ReceiveData;
-
 	String^ AskScan = gcnew String("sRN LMDscandata");
-	
-	
 
 	Client = gcnew TcpClient(HostName, PortNumber);
 
@@ -76,14 +70,13 @@ int GPS::connect(String^ HostName, int PortNumber)
 	Client->ReceiveBufferSize = 1024;
 	Client->SendBufferSize = 1024;
 
-	
+
 	SendData = gcnew array<unsigned char>(16);
 	ReadData = gcnew array<unsigned char>(2500);
 	ReceiveData = gcnew array<unsigned char>(5000);
 
 	NetworkStream^ Stream = Client->GetStream();
 
-	// YOUR CODE HERE
 	return 1;
 }
 
@@ -120,9 +113,9 @@ int GPS::setupSharedMemory()
 	PMObj.SMAccess();
 	GPSObj.SMCreate();
 	GPSObj.SMAccess();
-
-	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
-	SM_GPS* GPSData = (SM_GPS*)GPSObj.pData;
+	//ProcessManagementData = PMObj.pData;
+	PMData = (ProcessManagement*)PMObj.pData;
+	GPSData = (SM_GPS*)GPSObj.pData;
 	
 	return 1;
 }
@@ -155,12 +148,15 @@ int GPS::printData()
 	int CRCPos = HeaderLength + 80;
 
 
-	GPSData->Northing
+	GPSData->northing = ReadData[NorthingPos];
+	GPSData->easting = ReadData[EastingPos];
+	GPSData->height = ReadData[HeightPos];
+
 	// take northing, easting, crc
 	Console::WriteLine("Northing: " + ReadData[NorthingPos]);
 	Console::WriteLine("Easting: " + ReadData[EastingPos]);
 	Console::WriteLine("Height: " + ReadData[HeightPos]);
-	Console::WriteLine("CRC: " + ReadData[CRCPos]);
+	//Console::WriteLine("CRC: " + ReadData[CRCPos]);
 
 }
 
