@@ -1,4 +1,4 @@
-
+#pragma once
 #include <UGV_module.h>
 #include <smstructs.h>
 
@@ -20,9 +20,11 @@ public:
 	int sendDataToSharedMemory() override;
 	bool getShutdownFlag() override;
 	int setHeartbeat(bool heartbeat) override;
+	double^ getTimestamp() override;
 	~GPS();
 protected:
 	
+	SM_GPS* GPSData;
 	// YOUR CODE HERE (ADDITIONAL MEMBER VARIABLES THAT YOU MAY WANT TO ADD)
 
 };

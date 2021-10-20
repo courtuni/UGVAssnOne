@@ -17,63 +17,70 @@ using namespace System::Text;
 
 int main()
 {
-	//Declaration of PMObj
-	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
-	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
-	
-	//SM Creation and seeking access
-	Shutdown = 0x00;
+	// Create instance of Laser Functions
+	Laser LaserFunctions;
+	LaserFunctions.setupSharedMemory();
 
-	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
-	PMObj.SMCreate();
-	PMObj.SMAccess();
-	LaserObj.SMCreate();
-	LaserObj.SMAccess();
+	////Declaration of PMObj
+	//SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	//SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
+	//
+	////SM Creation and seeking access
+	//int Shutdown = 0x00;
+	//double TimeStamp;
+	//__int64 Frequency, Counter;
 
-	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
-	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
+	//QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
+	//PMObj.SMCreate();
+	//PMObj.SMAccess();
+	//LaserObj.SMCreate();
+	//LaserObj.SMAccess();
 
-
-	// Port number of Laser
-	int PortNumber = 23000;
-
-	TcpClient^ Client;
-
-	array<unsigned char>^ SendData;
-	array<unsigned char>^ ReadData;
-	array<unsigned char>^ AuthData;
-	array<unsigned char>^ ReceiveData;
-
-	String^ AskScan = gcnew String("sRN LMDscandata");
-	String^ StudID = gcnew String("5175357\n");
-	String^ ResponseData;
-
-	Client = gcnew TcpClient("192.168.1.200", PortNumber);
-
-	Client->NoDelay = true;
-	Client->ReceiveTimeout = 500; //ms
-	Client->SendTimeout = 500; //ms
-	Client->ReceiveBufferSize = 1024;
-	Client->SendBufferSize = 1024;
-
-	AuthData = gcnew array<unsigned char>(StudID->Length);
-	SendData = gcnew array<unsigned char>(16);
-	ReadData = gcnew array<unsigned char>(2500);
-	ReceiveData = gcnew array<unsigned char>(5000);
-
-	NetworkStream^ Stream = Client->GetStream();
+	//ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
+	//SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
 
 
-	//Authenticate User
+	//// Port number of Laser
+	//int PortNumber = 23000;
+	//String^ HostName = "192.168.1.200";
 
-	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
-	Stream->Write(AuthData, 0, AuthData->Length);
+	//TcpClient^ Client;
 
-	System::Threading::Thread::Sleep(100);
+	//array<unsigned char>^ SendData;
+	//array<unsigned char>^ ReadData;
+	//array<unsigned char>^ AuthData;
+	//array<unsigned char>^ ReceiveData;
 
-	Stream->Read(ReadData, 0, ReadData->Length);
-	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-	Console::WriteLine(ResponseData);
+	//String^ AskScan = gcnew String("sRN LMDscandata");
+	//String^ StudID = gcnew String("5175357\n");
+	//String^ ResponseData;
+
+	//Client = gcnew TcpClient("192.168.1.200", PortNumber);
+
+	//Client->NoDelay = true;
+	//Client->ReceiveTimeout = 500; //ms
+	//Client->SendTimeout = 500; //ms
+	//Client->ReceiveBufferSize = 1024;
+	//Client->SendBufferSize = 1024;
+
+	//AuthData = gcnew array<unsigned char>(StudID->Length);
+	//SendData = gcnew array<unsigned char>(16);
+	//ReadData = gcnew array<unsigned char>(2500);
+	//ReceiveData = gcnew array<unsigned char>(5000);
+
+	//NetworkStream^ Stream = Client->GetStream();
+
+
+	////Authenticate User
+
+	//AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
+	//Stream->Write(AuthData, 0, AuthData->Length);
+
+	//System::Threading::Thread::Sleep(100);
+
+	//Stream->Read(ReadData, 0, ReadData->Length);
+	//ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+	//Console::WriteLine(ResponseData);
 
 	while (1)
 	{
@@ -160,4 +167,128 @@ int main()
 	Stream->Close();
 	Client->Close();
 	return 0;
+}
+
+
+int Laser::connect(String^ HostName, int PortNumber)
+{
+	TcpClient^ Client;
+	String^ AskScan = gcnew String("sRN LMDscandata");
+
+
+	Client = gcnew TcpClient(HostName, PortNumber);
+
+	Client->NoDelay = true;
+	Client->ReceiveTimeout = 500; //ms
+	Client->SendTimeout = 500; //ms
+	Client->ReceiveBufferSize = 1024;
+	Client->SendBufferSize = 1024;
+
+
+	SendData = gcnew array<unsigned char>(16);
+	ReadData = gcnew array<unsigned char>(2500);
+	ReceiveData = gcnew array<unsigned char>(5000);
+
+	NetworkStream^ Stream = Client->GetStream();
+
+	// YOUR CODE HERE
+	return 1;
+}
+
+int Laser::authenticateUser(String^ StudID)
+{
+
+	//array<unsigned char>^ AuthData;
+
+
+	AuthData = gcnew array<unsigned char>(StudID->Length);
+
+	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
+
+	Stream->Write(AuthData, 0, AuthData->Length);
+
+	System::Threading::Thread::Sleep(100);
+
+
+}
+
+int Laser::setupSharedMemory()
+{
+	//Declaration of PMObj
+	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
+
+	//SM Creation and seeking access
+	Shutdown = 0x00;
+	double TimeStamp;
+	__int64 Frequency, Counter;
+	//int Shutdown = 0x00;
+
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+	LaserObj.SMCreate();
+	LaserObj.SMAccess();
+
+	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
+	SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
+
+	return 1;
+}
+
+int Laser::getData()
+{
+	Stream->Read(ReadData, 0, ReadData->Length);
+	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+	Console::WriteLine(ResponseData);
+
+	// YOUR CODE HERE
+	return 1;
+}
+
+int Laser::checkData()
+{
+	// YOUR CODE HERE
+	return 1;
+}
+
+int Laser::printData()
+{
+	// Get header length
+	int HeaderLength = ReadData[3];
+
+	// declare data positions
+	double NorthingPos = HeaderLength + 16;
+	double EastingPos = HeaderLength + 24;
+	double HeightPos = HeaderLength + 32;
+	int CRCPos = HeaderLength + 80;
+
+	// take northing, easting, crc
+	Console::WriteLine("Northing: " + ReadData[NorthingPos]);
+	Console::WriteLine("Easting: " + ReadData[EastingPos]);
+	Console::WriteLine("Height: " + ReadData[HeightPos]);
+	Console::WriteLine("CRC: " + ReadData[CRCPos]);
+
+}
+
+int Laser::sendDataToSharedMemory()
+{
+	// YOUR CODE HERE
+	return 1;
+}
+
+bool Laser::getShutdownFlag()
+{
+	// YOUR CODE HERE
+	return 1;
+}
+
+int Laser::setHeartbeat(bool heartbeat)
+{
+	// YOUR CODE HERE
+	return 1;
+}
+
+Laser::~Laser()
+{
+	// YOUR CODE HERE
 }

@@ -14,44 +14,46 @@ using namespace System::Threading;
 
 int main()
 {
+	// Create instance of GPS Functions
 	GPS GPSFunctions;
-	int success = GPSFunctions.setupSharedMemory();
+	GPSFunctions.setupSharedMemory();
 	
 	// Port number of GPS
 	int PortNumber = 24000;
 	String^ HostName = "192.168.1.200";
 
-	success = GPSFunctions.connect(HostName, PortNumber);
+	GPSFunctions.connect(HostName, PortNumber);
 
 	// Student ID
 	String^ StudID = gcnew String("5175357\n");
 	GPSFunctions.authenticateUser(StudID);
 
-	// Heartbeat Variables
+	// Timestamp Variables
 	double^ TimeStamp;
 	__int64 Frequency, Counter;
+
+	// Shutdown Variable
 	int Shutdown;
 
 	while (1)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
-		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
+		TimeStamp = GPSFunctions.getTimestamp();
 		Console::WriteLine("GPS time stamp      : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
-		Thread::Sleep(25);
+
 		if (PMData->Shutdown.Status)
 			break;
 		if (_kbhit())
 			break;
 	}
 
-
 	return 0;
+}
 
-	//while (1)
-	//{
-	//	Console::WriteLine("Framework Versions Changing");
-	//}
-	//return 0;
+double^ GPS::getTimestamp()
+{
+	QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
+	TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
+	Thread::Sleep(25);
 }
 
 int GPS::connect(String^ HostName, int PortNumber)
@@ -147,11 +149,13 @@ int GPS::printData()
 	int HeaderLength = ReadData[3];
 
 	// declare data positions
-	double NorthingPos = HeaderLength + 16;
-	double EastingPos = HeaderLength + 24;
-	double HeightPos = HeaderLength + 32;
+	int NorthingPos = HeaderLength + 16;
+	int EastingPos = HeaderLength + 24;
+	int HeightPos = HeaderLength + 32;
 	int CRCPos = HeaderLength + 80;
 
+
+	GPSData->Northing
 	// take northing, easting, crc
 	Console::WriteLine("Northing: " + ReadData[NorthingPos]);
 	Console::WriteLine("Easting: " + ReadData[EastingPos]);
