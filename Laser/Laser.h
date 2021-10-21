@@ -24,13 +24,15 @@ ref class Laser : public UGV_module
 		int getTimestamp() override;
 		~Laser();
 	
-	protected:
+	public:
+		SM_Laser* LaserData;
+protected:
 
 		TcpClient^ LaserClient;					// Handle for TCP connection
 		NetworkStream^ LaserStream;				// Handle for TCP data stream
 		String^ LaserResponseData;				// Handle for raw response
 
-		SM_Laser* LaserData;
+		
 		int DataPos;
 		INT32 StartingAngle;
 		UINT16 AngularStepWidth;

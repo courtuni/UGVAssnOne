@@ -27,67 +27,18 @@ int main()
 
 	// Shutdown Variable
 	//int Shutdown;
+		// Connect to UGV
+	int PortNumber = 23000;
+	String^ HostName = "192.168.1.200";
 
-	////Declaration of PMObj
-	//SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
-	//SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
-	//
-	////SM Creation and seeking access
-	//int Shutdown = 0x00;
-	//double TimeStamp;
-	//__int64 Frequency, Counter;
+	Console::WriteLine("Connecting...");
+	LaserFunctions.connect(HostName, PortNumber);
 
-	//QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
-	//PMObj.SMCreate();
-	//PMObj.SMAccess();
-	//LaserObj.SMCreate();
-	//LaserObj.SMAccess();
+	// Authenticate with Student ID
+	String^ StudID = gcnew String("5175357\n");
 
-	//ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
-	//SM_Laser* LaserData = (SM_Laser*)LaserObj.pData;
-
-
-	//// Port number of Laser
-	//int PortNumber = 23000;
-	//String^ HostName = "192.168.1.200";
-
-	//TcpLaserClient^ LaserClient;
-
-	//array<unsigned char>^ SendData;
-	//array<unsigned char>^ ReadData;
-	//array<unsigned char>^ AuthData;
-	//array<unsigned char>^ ReceiveData;
-
-	//String^ AskScan = gcnew String("sRN LMDscandata");
-	//String^ StudID = gcnew String("5175357\n");
-	//String^ ResponseData;
-
-	//LaserClient = gcnew TcpLaserClient("192.168.1.200", PortNumber);
-
-	//LaserClient->NoDelay = true;
-	//LaserClient->ReceiveTimeout = 500; //ms
-	//LaserClient->SendTimeout = 500; //ms
-	//LaserClient->ReceiveBufferSize = 1024;
-	//LaserClient->SendBufferSize = 1024;
-
-	//AuthData = gcnew array<unsigned char>(StudID->Length);
-	//SendData = gcnew array<unsigned char>(16);
-	//ReadData = gcnew array<unsigned char>(2500);
-	//ReceiveData = gcnew array<unsigned char>(5000);
-
-	//NetworkStream^ Stream = LaserClient->GetStream();
-
-
-	////Authenticate User
-
-	//AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
-	//Stream->Write(AuthData, 0, AuthData->Length);
-
-	//System::Threading::Thread::Sleep(100);
-
-	//Stream->Read(ReadData, 0, ReadData->Length);
-	//ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-	//Console::WriteLine(ResponseData);
+	Console::WriteLine("Authenticating...");
+	LaserFunctions.authenticateUser(StudID);
 
 	while (1)
 	{
@@ -111,6 +62,7 @@ int main()
 
 		// Laser Data
 		LaserFunctions.getData();
+		LaserFunctions.calculateData();
 		LaserFunctions.sendDataToSharedMemory();
 		LaserFunctions.printData();
 
@@ -165,11 +117,6 @@ int Laser::connect(String^ HostName, int PortNumber)
 	LaserClient->ReceiveBufferSize = 1024;
 	LaserClient->SendBufferSize = 1024;
 
-
-	//SendData = gcnew array<unsigned char>(16);
-	ReadData = gcnew array<unsigned char>(2500);
-	ReceiveData = gcnew array<unsigned char>(5000);
-
 	//NetworkStream^ Stream = LaserClient->GetStream();
 	LaserStream = LaserClient->GetStream();
 
@@ -213,17 +160,26 @@ int Laser::setupSharedMemory()
 
 	PMData = (ProcessManagement*)PMObj.pData;
 	LaserData = (SM_Laser*)LaserObj.pData;
-
+	//&LaserData 
+	//*(LaserData->x) = gcnew array<double>(361);
+	LaserData->x[3] = 2;
+	Console::WriteLine("changed it to: ", LaserData->x[0]);
 	return 1;
 }
 
 int Laser::getData()
 {
+	SendData = gcnew array<unsigned char>(16);
+	ReadData = gcnew array<unsigned char>(2500);
+	ReceiveData = gcnew array<unsigned char>(5000);
+
 	// Check for known beginning of stream
 	String^ AskScan = gcnew String("sRN LMDscandata");
 
 	SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
-
+	
+	//Console::WriteLine(LaserClient);
+	//LaserStream = LaserClient->GetStream();
 	LaserStream->WriteByte(0x02);
 	LaserStream->Write(SendData, 0, SendData->Length);
 	LaserStream->WriteByte(0x03);
@@ -231,9 +187,7 @@ int Laser::getData()
 	System::Threading::Thread::Sleep(10);
 
 	// Read in data at that point
-	ReadData = gcnew array<unsigned char>(2500);
-
-	Stream->Read(ReadData, 0, ReadData->Length);
+	LaserStream->Read(ReadData, 0, ReadData->Length);
 	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
 
 	return 1;
@@ -241,6 +195,8 @@ int Laser::getData()
 
 int Laser::calculateData()
 {
+	//^LaserData->x = gcnew
+	//LaserData->x[0]; //= new array<double>(361);
 	// Offset calculations
 	// Known constants from Laser manual
 	int NumberEncodersPos = 75; // const message size until this position
@@ -261,24 +217,33 @@ int Laser::calculateData()
 	DataPos = MeasuredDataPos + MeasuredDataSize;
 	StartingAngle = ReadData[DataPos + 10];
 	AngularStepWidth = ReadData[DataPos + 15];
-	int dist = (ReadData[DataPos + DataGeneralInfoSize] << 8) | (ReadData[DataPos + DataGeneralInfoSize + 1]);
+
+	int XYDataPos = DataPos + DataGeneralInfoSize;
+	//double dist = System::Convert::ToInt32(ReadData[DataPos + DataGeneralInfoSize], 16);
+	//int dist = (ReadData[DataPos + DataGeneralInfoSize] << 8) | (ReadData[DataPos + DataGeneralInfoSize + 1]);
+	double Dist; // ReadData[XYDataPos] * 256 + ReadData[XYDataPos + 1];
+	//Console::WriteLine("dist: ", dist);
+	
+	//SM_Laser* LaserData;
+
+	unsigned char* BytePtrX;
+	unsigned char* BytePtrY;
+	BytePtrX = (unsigned char*)&(LaserData->x[0]);
+	BytePtrY = (unsigned char*)&(LaserData->y[0]);
+	double valueX;
 	
 	for (int i = 0; i < 361; i++)
 	{
-		LaserData->x[i] = dist * cos(StartingAngle + i * AngularStepWidth);
-		LaserData->y[i] = dist * sin(StartingAngle + i * AngularStepWidth);
+		double sdist = ReadData[XYDataPos + 2 * i] * 256 + ReadData[XYDataPos + 2 * i + 1];
+		Console::WriteLine("value Dist boyz: " + sdist);
+		valueX = sdist * cos(StartingAngle + i * AngularStepWidth);
+		Console::WriteLine("value X boyz: " + valueX);
+		//*(BytePtrX+i) = 
+		Sleep(1000);
+		*(BytePtrY+i) = sdist * sin(StartingAngle + i * AngularStepWidth);
+		//LaserData->x[i] = dist * cos(StartingAngle + i * AngularStepWidth);
+		//LaserData->y[i] = dist * sin(StartingAngle + i * AngularStepWidth);
 	}
-
-	// note - assuming single channel
-
-			// Scaling Factor
-			//int ScalingFactorPos = MeasuredDataPos + MeasuredDataSize;
-			//byte b1 = ReadData[ScalingFactorPos];
-			//byte b2 = ReadData[ScalingFactorPos + 1];
-			//byte b3 = ReadData[ScalingFactorPos + 2];
-			//byte b4 = ReadData[ScalingFactorPos + 3];
-			//float ScalingFactor = (b1 << 24) | (b2 << 16) | (b3 << 16) | b4;
-			//Console::WriteLine(ScalingFactor);
 
 	return 1;
 }
@@ -286,13 +251,13 @@ int Laser::calculateData()
 int Laser::printData()
 {
 	// Print raw data
-	Console::WriteLine(ResponseData);
+	//Console::WriteLine(ResponseData);
 
 	// Print good data
 	for (int i = 0; i < 361; i++)
 	{
-		Console::WriteLine("x is: " + LaserData->x[i]);
-		Console::WriteLine("y is: " + LaserData->y[i]);
+		//Console::WriteLine("x is: " + LaserData->x[i]);
+		//Console::WriteLine("y is: " + LaserData->y[i]);
 	}
 
 	return 1;
