@@ -15,14 +15,22 @@ using namespace System::Text;
 
 int main()
 {
-	//Declaration of PMObj
-	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
-	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
-	
-	//SM Creation and seeking access
-	double TimeStamp;
-	__int64 Frequency, Counter;
-	int Shutdown = 0x00;
+	// Create instance of Laser Functions
+	Laser LaserFunctions;
+	LaserFunctions.setupSharedMemory();
+
+	// Connect to UGV
+	int PortNumber = 23000;
+	String^ HostName = "192.168.1.200";
+
+	Console::WriteLine("Connecting...");
+	LaserFunctions.connect(HostName, PortNumber);
+
+	// Authenticate with Student ID
+	String^ StudID = gcnew String("5175357\n");
+
+	Console::WriteLine("Authenticating...");
+	LaserFunctions.authenticateUser(StudID);
 
 	QueryPerformanceFrequency((LARGE_INTEGER*)&Frequency);
 	//PMObj.SMCreate();
@@ -94,23 +102,142 @@ int main()
 		TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
 		Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
 
-		// Scan for beginning of Laser information
-		SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+		Console::WriteLine("Setting Heartbeat...");
+		LaserFunctions.setHeartbeat(1);
 
-		Stream->WriteByte(0x02);
-		Stream->Write(SendData, 0, SendData->Length);
-		Stream->WriteByte(0x03);
+		// Laser Data
+		Console::WriteLine("Getting Data...");
+		LaserFunctions.getData();
+		Console::WriteLine("Sending Data...");
+		LaserFunctions.sendDataToSharedMemory();
+		Console::WriteLine("Printing Data...");
+		LaserFunctions.printData();
+
+		// Scan for beginning of Laser information
+
+
+		// Read and decode Laser information
+		//Stream->Read(ReadData, 0, ReadData->Length);
+		//for (int i = 0; i < ReadData->Length; i++)
+		//{
+		//	Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
+		//}
+		//ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+		//Console::WriteLine(ResponseData);
+
+
+		// Print Laser coordinates in [x,y]
+
+		//for (int i = 0; i < 361; i++)
+		//{
+		//	//LaserData->x[i] = 
+		//	//Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[i]), (LaserData->y[i]));
+		//}
+		
+
+		// Set Laser heartbeat to 1 (Laser is alive)
+
+		//PMData->Heartbeat.Flags.Laser = 1;
+	}
+
+
+	return 0;
+}
+
+int Laser::getTimestamp()
+{
+	//QueryPerformanceCounter((LARGE_INTEGER*)&Counter);
+	//TimeStamp = (double)Counter / (double)Frequency * 1000; // ms
+	//Console::WriteLine("Laser time stamp    : {0,12:F3} {1,12:X2}", TimeStamp, Shutdown);
+	return 1;
+}
+
+int Laser::connect(String^ HostName, int PortNumber)
+{
+	//TcpClient^ LaserClient; //already in ugv module
+
+	LaserClient = gcnew TcpClient(HostName, PortNumber);
+
+	LaserClient->NoDelay = true;
+	LaserClient->ReceiveTimeout = 500; //ms
+	LaserClient->SendTimeout = 500; //ms
+	LaserClient->ReceiveBufferSize = 1024;
+	LaserClient->SendBufferSize = 1024;
+
+
+	SendData = gcnew array<unsigned char>(16);
+	ReadData = gcnew array<unsigned char>(2500);
+	ReceiveData = gcnew array<unsigned char>(5000);
+
+	LaserStream = LaserClient->GetStream();
+
+	return 1;
+}
+
+int Laser::disconnect()
+{
+	LaserStream->Close();
+	LaserClient->Close();
+	return 1;
+}
+
+int Laser::authenticateUser(String^ StudID)
+{
+	AuthData = gcnew array<unsigned char>(StudID->Length);
+	AuthData = System::Text::Encoding::ASCII->GetBytes(StudID);
+
+	LaserStream->Write(AuthData, 0, AuthData->Length);
+	System::Threading::Thread::Sleep(100);
+
+	return 1;
+}
+
+int Laser::setupSharedMemory()
+{
+	//Declaration of PMObj
+	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
+	SMObject LaserObj(TEXT("SM_Laser"), sizeof(SM_Laser));
+
+	//SM Creation and seeking access
+	Shutdown = 0x00;
+	double TimeStamp;
+	__int64 Frequency, Counter;
+	//int Shutdown = 0x00;
+
+	PMObj.SMCreate();
+	PMObj.SMAccess();
+	LaserObj.SMCreate();
+	LaserObj.SMAccess();
+
+	PMData = (ProcessManagement*)PMObj.pData;
+	LaserData = (SM_Laser*)LaserObj.pData;
+
+	return 1;
+}
+
+int Laser::getData()
+{
+	// Check for known beginning of stream
+	Console::WriteLine("asking scan");
+	String^ AskScan = gcnew String("sRN LMDscandata");
+
+	Console::WriteLine("setting send data");
+	array<unsigned char>^ SendData = System::Text::Encoding::ASCII->GetBytes(AskScan);
+
+	Console::WriteLine("writing bytes");
+	LaserStream->WriteByte(0x02);
+	LaserStream->Write(SendData, 0, SendData->Length);
+	LaserStream->WriteByte(0x03);
 
 		System::Threading::Thread::Sleep(10);
 
-		// Read and decode Laser information
-		Stream->Read(ReadData, 0, ReadData->Length);
-		for (int i = 0; i < ReadData->Length; i++)
-		{
-			Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
-		}
-		ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-		Console::WriteLine(ResponseData);
+	Console::WriteLine("reading in the data");
+	// Read in data at that point
+	ReadData = gcnew array<unsigned char>(2500);
+
+	Stream->Read(ReadData, 0, ReadData->Length);
+	ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
+	Console::WriteLine(ResponseData);
 
 		//TODO make proper offset variable
 		//int offset = 110;
@@ -154,8 +281,11 @@ int main()
 
 		// Set Laser heartbeat to 1 (Laser is alive)
 
-		PMData->Heartbeat.Flags.Laser = 1;
-	}
+int Laser::setHeartbeat(bool heartbeat)
+{
+	//PMData->Heartbeat.Flags.Laser = heartbeat;
+	return 1;
+}
 
 	Stream->Close();
 	Client->Close();

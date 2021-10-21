@@ -55,13 +55,15 @@ ref class UGV_module
 			}
 		}
 
-
+	public:
+		ProcessManagement* PMData;
 	protected:
 		int Error;							// Stores last error code
 		TcpClient^ Client;					// Handle for TCP connection
 		NetworkStream^ Stream;				// Handle for TCP data stream
 		array<unsigned char>^ ReadData;		// Array to store sensor Data
 
+		
 		SMObject* ProcessManagementData;	// Filled in setupSharedMemory(). For accessing PM shared Memory
 		SMObject* SensorData;				// Filled in setupSharedMemory(). For storing sensory data to shared Memory
 
