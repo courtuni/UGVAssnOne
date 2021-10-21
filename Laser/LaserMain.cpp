@@ -105,6 +105,9 @@ int main()
 		Console::WriteLine("Setting Heartbeat...");
 		LaserFunctions.setHeartbeat(1);
 
+		Console::WriteLine("Setting Heartbeat...");
+		LaserFunctions.setHeartbeat(1);
+
 		// Laser Data
 		Console::WriteLine("Getting Data...");
 		LaserFunctions.getData();
