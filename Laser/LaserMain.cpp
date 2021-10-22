@@ -26,8 +26,9 @@ int main()
 	__int64 Frequency, Counter;
 
 	// Shutdown Variable
-	//int Shutdown;
-		// Connect to UGV
+	int Shutdown;
+	
+	// Connect to UGV
 	int PortNumber = 23000;
 	String^ HostName = "192.168.1.200";
 
@@ -42,12 +43,6 @@ int main()
 
 	while (1)
 	{
-		// Check status of Process Management
-		/*if (PMData->Shutdown.Status || PMData->Heartbeat.Flags.ProcessManagement == 1)
-		{
-			Console::WriteLine("Shutting down.");
-			break;
-		}*/
 		// Health Check
 		if (LaserFunctions.getShutdownFlag())
 		{
@@ -66,31 +61,6 @@ int main()
 		LaserFunctions.sendDataToSharedMemory();
 		LaserFunctions.printData();
 
-		// Scan for beginning of Laser information
-
-
-		// Read and decode Laser information
-		//Stream->Read(ReadData, 0, ReadData->Length);
-		//for (int i = 0; i < ReadData->Length; i++)
-		//{
-		//	Console::WriteLine("Byte { 0 }\t{ 1 }", i, ReadData[i]);
-		//}
-		//ResponseData = System::Text::Encoding::ASCII->GetString(ReadData);
-		//Console::WriteLine(ResponseData);
-
-
-		// Print Laser coordinates in [x,y]
-
-		//for (int i = 0; i < 361; i++)
-		//{
-		//	//LaserData->x[i] = 
-		//	//Console::WriteLine("Point {0,3:F0}: [{0,8:F3},{0,8:F3}]", i, (LaserData->x[i]), (LaserData->y[i]));
-		//}
-		
-
-		// Set Laser heartbeat to 1 (Laser is alive)
-
-		//PMData->Heartbeat.Flags.Laser = 1;
 	}
 
 
@@ -159,11 +129,13 @@ int Laser::setupSharedMemory()
 	LaserObj.SMAccess();
 
 	PMData = (ProcessManagement*)PMObj.pData;
-	LaserData = (SM_Laser*)LaserObj.pData;
+	//LaserData = (SM_Laser*)LaserObj.pData;
+	LaserData = new(LaserObj.pData) SM_Laser;
 	//&LaserData 
 	//*(LaserData->x) = gcnew array<double>(361);
 	LaserData->x[3] = 2;
-	Console::WriteLine("changed it to: ", LaserData->x[0]);
+	Console::WriteLine("size of LaserData is: " + sizeof(LaserData->x));
+	Console::WriteLine("changed it to: "+ LaserData->x[3]);
 	return 1;
 }
 
@@ -195,6 +167,8 @@ int Laser::getData()
 
 int Laser::calculateData()
 {
+
+	LaserData.SMAccess();
 	//^LaserData->x = gcnew
 	//LaserData->x[0]; //= new array<double>(361);
 	// Offset calculations
@@ -228,6 +202,7 @@ int Laser::calculateData()
 
 	unsigned char* BytePtrX;
 	unsigned char* BytePtrY;
+	//(LaserData->x[0])* = new double; //(unsigned char*)&(LaserData->x[0]);
 	BytePtrX = (unsigned char*)&(LaserData->x[0]);
 	BytePtrY = (unsigned char*)&(LaserData->y[0]);
 	double valueX;
@@ -238,10 +213,10 @@ int Laser::calculateData()
 		Console::WriteLine("value Dist boyz: " + sdist);
 		valueX = sdist * cos(StartingAngle + i * AngularStepWidth);
 		Console::WriteLine("value X boyz: " + valueX);
-		//*(BytePtrX+i) = 
+		//*(BytePtrX + i) = valueX;
 		Sleep(1000);
-		*(BytePtrY+i) = sdist * sin(StartingAngle + i * AngularStepWidth);
-		//LaserData->x[i] = dist * cos(StartingAngle + i * AngularStepWidth);
+		//*(BytePtrY+i) = sdist * sin(StartingAngle + i * AngularStepWidth);
+		LaserData->x[i] = 1;// sdist* cos(StartingAngle + (i * AngularStepWidth));
 		//LaserData->y[i] = dist * sin(StartingAngle + i * AngularStepWidth);
 	}
 

@@ -25,8 +25,9 @@ ref class Laser : public UGV_module
 		~Laser();
 	
 	public:
+		SMObject* LaserSMObj;
 		SM_Laser* LaserData;
-protected:
+	public:
 
 		TcpClient^ LaserClient;					// Handle for TCP connection
 		NetworkStream^ LaserStream;				// Handle for TCP data stream
