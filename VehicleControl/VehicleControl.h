@@ -1,16 +1,17 @@
 #pragma once
+
 #include <UGV_module.h>
 #include <smstructs.h>
 
 #define CRC32_POLYNOMIAL 0xEDB88320L
 
-unsigned long CRC32Value(int i);
-unsigned long CalculateBlockCRC32(unsigned long ulCount, unsigned char* ucBuffer);
+//unsigned long CRC32Value(int i);
+//unsigned long CalculateBlockCRC32(unsigned long ulCount, unsigned char* ucBuffer);
 
-ref class GPS : public UGV_module
+ref class VehicleControl : public UGV_module
 {
-
 public:
+
 	int connect(String^ hostName, int portNumber) override;
 	int disconnect() override;
 	int authenticateUser(String^ StudID) override;
@@ -23,12 +24,9 @@ public:
 	int getHeartbeat() override;
 	int setHeartbeat(bool heartbeat) override;
 	int getTimestamp() override;
-	~GPS();
-protected:
-	
-	SM_GPS* GPSData;
+	~VehicleControl();
 
-	TcpClient^ GPSClient;					// Handle for TCP connection
-	NetworkStream^ GPSStream;				// Handle for TCP data stream
+public:
+	SM_VehicleControl* VehicleControlData;
 
 };

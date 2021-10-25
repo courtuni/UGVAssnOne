@@ -19,9 +19,13 @@ using namespace System::Threading;
 #define NUM_UNITS 5
 
 int main();
-
+int Diagnostics();
 bool IsProcessRunning(const char* processName);
+void RestartProcess(int i);
 void StartProcesses();
+
+int HeartbeatBuffer = 0;
+int BufferLimit = 5;
 
 //defining start up sequence
 TCHAR Units[10][20] = //
@@ -47,19 +51,11 @@ value struct UGVProcessHealth
 
 int main()
 {
-		// Initialisation of shared memory object for Process Management
+	// Initialisation of shared memory object for Process Management
 	SMObject PMObj(TEXT("ProcessManagement"), sizeof(ProcessManagement));
 	
 	// Initialisation of array of UGV Processes' health
 	// Order: module name, critical flag, crash count, crash count limit, process name
-	array<UGVProcessHealth>^ ProcessHealthList = gcnew array<UGVProcessHealth>
-	{
-		{ "Camera",	 0, 0, 10, gcnew Process },
-		{ "Display", 0, 0, 10, gcnew Process },
-		{ "GPS",	 0, 0, 10, gcnew Process },
-		{ "Laser",	 0, 0, 10, gcnew Process },
-		{ "VehicleControl", 0, 0, 10, gcnew Process },
-	};
 
 	// Creation and access request of shared memory
 	PMObj.SMCreate();
@@ -68,20 +64,6 @@ int main()
 	// Creation of PMData as type Process Management, throughct pData 
 	ProcessManagement* PMData = (ProcessManagement*)PMObj.pData;
 
-	// Start Diagnostics for all
-	for (int i = 0; i < ProcessHealthList->Length; i++)
-	{
-		if (Process::GetProcessesByName(ProcessHealthList[i].ModuleName)->Length == 0)
-		{
-			ProcessHealthList[i].ProcessName = gcnew Process;
-			// TODO remove magic string for working directory
-			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\z5175357\\Source\\Repos\\UGVAssnOne\\Debug";
-			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
-			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
-			ProcessHealthList[i].ProcessName->Start();
-			Console::WriteLine("Process " + ProcessHealthList[i].ModuleName + ".exe has started.");
-		}
-	}
 
 	// Start all 5 modules
 	StartProcesses();
@@ -91,26 +73,68 @@ int main()
 	while (!_kbhit())
 	{
 		// Diagnostics
-		for (int i = 0; i < ProcessHealthList->Length; i++)
+		//int i = 0;
+
+		// Laser
+		if ((PMData->Heartbeat.Flags.Laser == CRITICALMASK) && (!PMData->Heartbeat.Flags.Laser))
 		{
-			PMData->Heartbeat.Flags.GPS = 0;
-			// Console::WriteLine("Process Management Still Happy");
-			Console::WriteLine(ProcessHealthList[i].ModuleName + " process crash count: " + ProcessHealthList[i].CrashCount);
+			break;
 		}
-		Console::WriteLine(" ");
+
+		if ((PMData->Heartbeat.Flags.Laser == NONCRITICALMASK) && (!PMData->Heartbeat.Flags.Laser))
+		{
+			HeartbeatBuffer = 0;
+			while (HeartbeatBuffer < BufferLimit && (!PMData->Heartbeat.Flags.Laser)) {
+				HeartbeatBuffer++;
+			}
+
+			if (HeartbeatBuffer == BufferLimit)
+			{
+				// Heartbeat wasn't found
+				PMData->Shutdown.Flags.Laser = 0x01;
+				Sleep(2000);
+				
+
+				// Restart process
+				RestartProcess(5);
+
+				PMData->Heartbeat.Flags.Laser = 0;
+			}
+			else
+			{
+				// Heartbeat was found
+				PMData->Heartbeat.Flags.Laser = 0;
+			}
+
+		}
+
+		// TODO: other module diagnostics
+		// GPS
+		// Camera
+		// Vehicle
+		// Display
+
+		Console::WriteLine("Heartbeats:");
+		Console::WriteLine("GPS: " + PMData->Heartbeat.Flags.GPS);
+		Console::WriteLine("Camera: " + PMData->Heartbeat.Flags.Camera);
+		Console::WriteLine("Display: " + PMData->Heartbeat.Flags.Display);
+		Console::WriteLine("VehicleControl: " + PMData->Heartbeat.Flags.VehicleControl);
+		Console::WriteLine("Laser: " + PMData->Heartbeat.Flags.Laser);
+
 		Sleep(500);
 
+		// Set happy heartbeat
 		PMData->Heartbeat.Status = 1;
 	}
 
 	PMData->Shutdown.Status = 0x01;
-
-	//Shutdown processes
-	//ShutdownProcesses();
-
 	return 0;
 }
 
+int Diagnostics()
+{
+	return 1;
+}
 
 //Is process running function
 bool IsProcessRunning(const char* processName)
@@ -130,7 +154,26 @@ bool IsProcessRunning(const char* processName)
 	return exists;
 }
 
+void RestartProcess(int i)
+{
+	STARTUPINFO s[10];
+	PROCESS_INFORMATION p[10];
 
+	if (!IsProcessRunning((const char*)Units[i]))
+	{
+		ZeroMemory(&s[i], sizeof(s[i]));
+		s[i].cb = sizeof(s[i]);
+		ZeroMemory(&p[i], sizeof(p[i]));
+
+		if (!CreateProcess(NULL, Units[i], NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &s[i], &p[i]))
+		{
+			printf("%s failed (%d).\n", Units[i], GetLastError());
+			_getch();
+		}
+		std::cout << "Started: " << Units[i] << std::endl;
+		Sleep(100);
+	}
+}
 
 
 void StartProcesses()
@@ -152,7 +195,7 @@ void StartProcesses()
 				_getch();
 			}
 			std::cout << "Started: " << Units[i] << std::endl;
-			Sleep(10000);
+			Sleep(1000);
 		}
 	}
 }

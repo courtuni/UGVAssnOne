@@ -42,6 +42,7 @@ ref class UGV_module
 		virtual int setHeartbeat(bool heartbeat) = 0;				// Update heartbeat signal for module
 		virtual int printData() = 0;
 		virtual int getTimestamp() = 0;
+		virtual int getHeartbeat() = 0;
 
 		void getError()
 		{

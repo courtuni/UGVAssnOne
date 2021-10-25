@@ -11,6 +11,12 @@ using namespace System;
 using namespace System::Diagnostics;
 using namespace System::Threading;
 
+using namespace System::Net::Sockets;
+using namespace System::Net;
+using namespace System::Text;
+
+int HeartbeatBuffer = 0;
+int BufferLimit = 5;
 
 int main()
 {
@@ -25,38 +31,48 @@ int main()
 	String^ HostName = "192.168.1.200";
 
 	Console::WriteLine("Connecting...");
-	GPSFunctions.connect(HostName, PortNumber);
+	//GPSFunctions.connect(HostName, PortNumber);
 
 	// Authenticate with Student ID
 	String^ StudID = gcnew String("5175357\n");
 
 	Console::WriteLine("Authenticating...");
-	GPSFunctions.authenticateUser(StudID);
+	//GPSFunctions.authenticateUser(StudID);
 
 	while (1)
 	{
-		Console::WriteLine("Health Checking...");
 		// Health check
 		if (GPSFunctions.getShutdownFlag())
 		{
-			Console::WriteLine("Shutting down.");
+			Console::WriteLine("Got shutdown flag, shutting down.");
 			break;
 		}
-		if (_kbhit())
+
+		if (!GPSFunctions.getHeartbeat())
+		{
+			HeartbeatBuffer = 0;
+
+			while (HeartbeatBuffer < BufferLimit && (!GPSFunctions.getHeartbeat())) {
+				HeartbeatBuffer++;
+			}
+		}
+
+		if ((HeartbeatBuffer == BufferLimit) || _kbhit())
+		{
 			break;
-		
-		Console::WriteLine("Setting Heartbeat...");
-		GPSFunctions.setHeartbeat(1);
+		}
 
 		//GPSFunctions.getTimestamp();
 
 		// GPS Data
 		Console::WriteLine("Getting Data...");
-		GPSFunctions.getData();
+		//GPSFunctions.getData();
 		Console::WriteLine("Sending Data...");
-		GPSFunctions.sendDataToSharedMemory();
+		//GPSFunctions.sendDataToSharedMemory();
 		Console::WriteLine("Printing Data...");
-		GPSFunctions.printData();
+		//GPSFunctions.printData();
+
+		GPSFunctions.setHeartbeat(1);
 	}
 
 	return 0;
@@ -88,7 +104,6 @@ int GPS::connect(String^ HostName, int PortNumber)
 
 	//NetworkStream^GPSStream = GPSClient->GetStream();
 	GPSStream = GPSClient->GetStream();
-
 	return 1;
 }
 
@@ -97,6 +112,7 @@ int GPS::disconnect()
 {
 	GPSStream->Close();
 	GPSClient->Close();
+
 	return 1;
 }
 
@@ -119,11 +135,10 @@ int GPS::setupSharedMemory()
 	SMObject GPSObj(TEXT("SM_GPS"), sizeof(SM_GPS));
 
 	//SM Creation and seeking access
-	PMObj.SMCreate();
 	PMObj.SMAccess();
 	GPSObj.SMCreate();
 	GPSObj.SMAccess();
-	//ProcessManagementData = PMObj.pData;
+
 	PMData = (ProcessManagement*)PMObj.pData;
 	GPSData = (SM_GPS*)GPSObj.pData;
 	
@@ -187,9 +202,12 @@ int GPS::sendDataToSharedMemory()
 
 bool GPS::getShutdownFlag()
 {
-	// YOUR CODE HERE
-	Shutdown = PMData->Shutdown.Status;
-	return Shutdown;
+	return (PMData->Shutdown.Status || PMData->Shutdown.Flags.GPS);
+}
+
+int GPS::getHeartbeat()
+{
+	return PMData->Heartbeat.Flags.ProcessManagement;
 }
 
 int GPS::setHeartbeat(bool heartbeat)

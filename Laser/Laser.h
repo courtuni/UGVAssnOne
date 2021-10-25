@@ -20,21 +20,33 @@ ref class Laser : public UGV_module
 		int calculateData() override;
 		int sendDataToSharedMemory() override;
 		bool getShutdownFlag() override;
+		int getHeartbeat() override;
 		int setHeartbeat(bool heartbeat) override;
 		int getTimestamp() override;
 		~Laser();
 	
 	public:
-		SMObject* LaserSMObj;
+
 		SM_Laser* LaserData;
-	public:
 
 		TcpClient^ LaserClient;					// Handle for TCP connection
 		NetworkStream^ LaserStream;				// Handle for TCP data stream
-		String^ LaserResponseData;				// Handle for raw response
 
 		
 		int DataPos;
 		INT32 StartingAngle;
 		UINT16 AngularStepWidth;
+
+		int NumberEncodersPos;
+		int EncoderInfoSize;
+		int NumberEncodersSize;
+		int NumberChannelsSize;
+		int MeasuredDataSize;
+		int DataGeneralInfoSize;
+		int NumberEncoders;
+		int NumberChannelsPos;
+		int MeasuredDataPos;
+		int XYDataPos;
+
+		double Distance;
 };
