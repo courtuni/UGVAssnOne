@@ -37,6 +37,11 @@ int main()
 	Console::WriteLine("Authenticating...");
 	//LaserFunctions.authenticateUser(StudID);
 
+	if (!LaserFunctions.WaitForSharedMemory())
+	{
+		return 0;
+	}
+
 	while (1)
 	{
 		// Shutdown and Heartbeat check
@@ -56,7 +61,7 @@ int main()
 			}
 		}
 
-		if ((HeartbeatBuffer == BufferLimit) || _kbhit())
+		if ((HeartbeatBuffer >= BufferLimit) || _kbhit())
 		{
 			break;
 		}
@@ -74,6 +79,21 @@ int main()
 	}
 
 	return 0;
+}
+
+bool Laser::WaitForSharedMemory()
+{
+	int MaxRetry = 5;
+	int RetryIntervalms = 500;
+	int retry = 0;
+
+	while (retry < MaxRetry && this->PMData == NULL)
+	{
+		Sleep(RetryIntervalms);
+		retry++;
+	}
+
+	return (this->PMData != NULL);
 }
 
 int Laser::getTimestamp()
@@ -215,17 +235,17 @@ int Laser::sendDataToSharedMemory()
 
 bool Laser::getShutdownFlag()
 {
-	return (PMData->Shutdown.Status || PMData->Shutdown.Flags.Laser);
+	return (this->PMData->Shutdown.Status || this->PMData->Shutdown.Flags.Laser);
 }
 
 int Laser::getHeartbeat()
 {
-	return PMData->Heartbeat.Flags.ProcessManagement;
+	return this->PMData->Heartbeat.Flags.ProcessManagement;
 }
 
 int Laser::setHeartbeat(bool heartbeat)
 {
-	PMData->Heartbeat.Flags.Laser = heartbeat;
+	this->PMData->Heartbeat.Flags.Laser = heartbeat;
 	return 1;
 }
 

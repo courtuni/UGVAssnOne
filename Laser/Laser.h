@@ -23,6 +23,7 @@ ref class Laser : public UGV_module
 		int getHeartbeat() override;
 		int setHeartbeat(bool heartbeat) override;
 		int getTimestamp() override;
+		bool WaitForSharedMemory();
 		~Laser();
 	
 	public:
