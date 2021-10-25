@@ -34,6 +34,7 @@
 #include "Shape.hpp"
 #include "Vehicle.hpp"
 #include "MyVehicle.hpp"
+#include "LaserData.hpp"
 
 #include "Messages.hpp"
 #include "HUD.hpp"
@@ -157,7 +158,7 @@ void display() {
 		vehicle->draw();
 
 	}
-
+	LaserData::drawLines();
 
 	// draw HUD
 	HUD::Draw();

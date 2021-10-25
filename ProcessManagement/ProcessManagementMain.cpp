@@ -75,7 +75,7 @@ int main()
 		{
 			ProcessHealthList[i].ProcessName = gcnew Process;
 			// TODO remove magic string for working directory
-			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\Courtney\\Source\\Repos\\UGVAssnOne\\Debug";
+			ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory = "C:\\Users\\Court\\Source\\Repos\\UGVAssnOne\\Debug";
 			// Console::WriteLine("Process" + ProcessHealthList[i].ProcessName->StartInfo->WorkingDirectory + "YAY");
 			ProcessHealthList[i].ProcessName->StartInfo->FileName = ProcessHealthList[i].ModuleName;
 			ProcessHealthList[i].ProcessName->Start();
